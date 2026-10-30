@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ALIUM: iniciar servidor local",
+      "type": "process",
+      "command": "node",
+      "args": ["server.js"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": { "PORT": "4176" }
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false
+      }
+    }
+  ]
+}

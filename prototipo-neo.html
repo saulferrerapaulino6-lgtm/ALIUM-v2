@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#09070e">
+<meta name="description" content="Prototipo ALIUM LAB: explora una computadora gaming interactiva y elige cada componente.">
+<title>ALIUM LAB — Diseña tu PC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/neo.css">
+</head>
+<body>
+<main class="lab" id="lab">
+<header class="lab-top">
+  <a class="brand" href="index.html" aria-label="ALIUM, volver a portada"><img src="assets/alium-as.png" alt=""><span>ALIUM</span><i>LAB</i></a>
+  <div class="build-state"><span class="status-dot"></span> ESTUDIO DE CONFIGURACIÓN <b> / </b> PROTOTIPO 01</div>
+  <a class="exit-link" href="index.html"><span>←</span> Portada</a>
+</header>
+
+<section class="workbench" aria-label="Estudio interactivo de componentes">
+  <aside class="intro-rail">
+    <div class="rail-index"><span>PC CUSTOM</span><b>001</b></div>
+    <p class="rail-overline">ARMA SIN LÍMITES</p>
+    <h1>DISEÑA<br>EL <em>PODER.</em></h1>
+    <p class="rail-copy">Una máquina hecha a tu medida. Elige una pieza y mira cómo toma su lugar.</p>
+    <a class="start-link" href="configurador.html">Crear mi configuración <span>↗</span></a>
+    <div class="rail-foot"><span>ALIUM / 2026</span><span>RD · GLOBAL</span></div>
+  </aside>
+
+  <div class="studio-stage" id="studio-stage" aria-label="Arrastra para girar la composición de componentes">
+    <div class="stage-topline"><span>VISTA DE COMPONENTES</span><span class="drag-hint"><b>↔</b> ARRASTRA PARA GIRAR</span></div>
+    <div class="stage-floor"></div>
+    <div class="energy-loop loop-a"></div><div class="energy-loop loop-b"></div><div class="energy-loop loop-c"></div>
+    <div class="rig" id="rig">
+      <div class="rig-frame"><div class="rig-window"></div><div class="rig-edge"></div><div class="rig-foot"></div></div>
+      <div class="board-back"></div>
+      <img class="piece piece-cooler" data-visual="cooler" src="assets/cooler.png" alt="">
+      <img class="piece piece-memory" data-visual="memory" src="assets/memory.png" alt="">
+      <img class="piece piece-board is-selected" data-visual="board" src="assets/motherboard.png" alt="">
+      <img class="piece piece-gpu" data-visual="gpu" src="assets/gpu.png" alt="">
+      <span class="scan-line"></span>
+    </div>
+    <button class="stage-hotspot hotspot-board is-selected" type="button" data-part="board" aria-label="Seleccionar placa base">01</button>
+    <button class="stage-hotspot hotspot-gpu" type="button" data-part="gpu" aria-label="Seleccionar tarjeta gráfica">02</button>
+    <button class="stage-hotspot hotspot-cooler" type="button" data-part="cooler" aria-label="Seleccionar refrigeración">03</button>
+    <button class="stage-hotspot hotspot-memory" type="button" data-part="memory" aria-label="Seleccionar memoria RAM">04</button>
+    <div class="stage-coordinate"><span>ROTACIÓN</span><b id="rotation-value">00°</b></div>
+    <button class="view-toggle" id="view-toggle" type="button" aria-pressed="false"><span class="toggle-icon">⊞</span><span id="view-label">Vista ensamblada</span></button>
+  </div>
+
+  <aside class="spec-rail" aria-live="polite">
+    <div class="spec-head"><span id="part-number">01</span><span class="spec-live"><i></i> PIEZA ACTIVA</span></div>
+    <div class="spec-image" id="spec-image"><img src="assets/motherboard.png" alt=""></div>
+    <p class="spec-type" id="part-type">PLACA BASE</p>
+    <h2 id="part-name">El núcleo del sistema.</h2>
+    <p class="spec-copy" id="part-description">Conecta procesador, memoria y gráfica para que todo trabaje en armonía.</p>
+    <div class="spec-lines"><div><span>FUNCIÓN</span><b id="part-function">Conectividad</b></div><div><span>ESTADO</span><b class="ready">Lista para elegir</b></div></div>
+    <button class="next-piece" id="next-part" type="button">Siguiente componente <span>→</span></button>
+    <div class="spec-watermark">AS / PERFORMANCE</div>
+  </aside>
+</section>
+
+<nav class="component-dock" aria-label="Componentes de la PC">
+  <div class="dock-label"><span>SELECCIONA UNA PIEZA</span><span>04 COMPONENTES</span></div>
+  <div class="dock-items">
+    <button type="button" class="dock-item is-selected" data-part="board"><span class="dock-number">01</span><span class="dock-icon icon-board"><img src="assets/motherboard.png" alt=""></span><span class="dock-name">Placa base</span><span class="dock-arrow">↗</span></button>
+    <button type="button" class="dock-item" data-part="gpu"><span class="dock-number">02</span><span class="dock-icon icon-gpu"><img src="assets/gpu.png" alt=""></span><span class="dock-name">Gráfica</span><span class="dock-arrow">↗</span></button>
+    <button type="button" class="dock-item" data-part="cooler"><span class="dock-number">03</span><span class="dock-icon icon-cooler"><img src="assets/cooler.png" alt=""></span><span class="dock-name">Refrigeración</span><span class="dock-arrow">↗</span></button>
+    <button type="button" class="dock-item" data-part="memory"><span class="dock-number">04</span><span class="dock-icon icon-memory"><img src="assets/memory.png" alt=""></span><span class="dock-name">Memoria RAM</span><span class="dock-arrow">↗</span></button>
+  </div>
+</nav>
+<footer class="lab-footer"><span>ELIGE. CONFIGURA. CONSTRUYE.</span><span>INTERACCIÓN 3D <i>●</i></span><a href="configurador.html">Ir al configurador <b>↗</b></a></footer>
+</main>
+<script src="assets/neo.js" defer></script>
+</body>
+</html>

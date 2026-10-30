@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090910">
+  <meta name="description" content="Diseña una PC a tu medida. Elige las piezas o encuentra una propuesta para tu presupuesto con ALIUM.">
+  <title>ALIUM — Arma tu siguiente nivel</title>
+  <link rel="preload" as="image" href="assets/motherboard.png">
+  <link rel="stylesheet" href="assets/home.css">
+</head>
+<body>
+  <main class="home">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="ALIUM, inicio"><img src="assets/alium-as.png" alt=""><span>ALIUM</span></a>
+      <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Abrir menú"><span></span><span></span><span></span></button>
+      <nav class="site-nav" id="site-nav" aria-label="Navegación principal"><a href="#recomendaciones">Recomendaciones</a><a href="#piezas">Piezas</a><a href="#promociones">Promociones</a><a href="montaje.html">Montaje</a><a class="nav-cta" href="configurador.html">Crear mi PC</a></nav>
+    </header>
+
+        <section class="parts-carousel" aria-label="Carrusel de componentes electrónicos">
+      <div class="carousel-track" id="carousel-track" aria-live="polite">
+        <article class="carousel-slide is-active" data-slide="0">
+          <div class="carousel-copy"><span class="carousel-kicker">ALIUM COMPONENTS / 01</span><h2>Potencia para jugar.<br><em>Libertad para crear.</em></h2><a href="configurador.html">Explorar componentes <b aria-hidden="true">↗</b></a></div>
+          <div class="carousel-visual visual-gpu"><span class="visual-orbit"></span><img src="assets/gpu.png" alt="Tarjeta gráfica gaming"></div>
+        </article>
+        <article class="carousel-slide" data-slide="1">
+          <div class="carousel-copy"><span class="carousel-kicker">ALIUM COMPONENTS / 02</span><h2>La base de todo<br><em>gran rendimiento.</em></h2><a href="configurador.html">Elegir placa base <b aria-hidden="true">↗</b></a></div>
+          <div class="carousel-visual visual-board"><span class="visual-orbit"></span><img src="assets/motherboard.png" alt="Placa base para PC"></div>
+        </article>
+        <article class="carousel-slide" data-slide="2">
+          <div class="carousel-copy"><span class="carousel-kicker">ALIUM COMPONENTS / 03</span><h2>Menos temperatura.<br><em>Más rendimiento.</em></h2><a href="configurador.html">Ver refrigeración <b aria-hidden="true">↗</b></a></div>
+          <div class="carousel-visual visual-cooler"><span class="visual-orbit"></span><img src="assets/cooler.png" alt="Sistema de refrigeración líquida"></div>
+        </article>
+      </div>
+      <div class="carousel-controls">
+        <div class="carousel-arrows"><button type="button" id="carousel-prev" aria-label="Elemento anterior">←</button><button type="button" id="carousel-next" aria-label="Elemento siguiente">→</button></div>
+        <div class="carousel-dots" role="group" aria-label="Elegir elemento del carrusel"><button type="button" aria-label="Mostrar tarjeta gráfica" aria-current="true"></button><button type="button" aria-label="Mostrar placa base"></button><button type="button" aria-label="Mostrar refrigeración"></button></div>
+        <span class="carousel-count"><b id="carousel-current">01</b> / 03</span>
+      </div>
+    </section>
+
+<section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <h1 id="hero-title">Arma tu<br><em>siguiente nivel.</em></h1>
+        <div class="hero-actions"><a class="build-button" href="configurador.html">Crear mi PC <span aria-hidden="true">↗</span></a></div>
+      </div>
+
+      <div class="workbench" aria-hidden="true">
+        <div class="bench-grid" aria-hidden="true"></div>
+        <div class="bench-light" aria-hidden="true"></div>
+        <div class="plinth plinth-back" aria-hidden="true"></div><div class="plinth plinth-front" aria-hidden="true"></div>
+        <figure class="component component-board"><img src="assets/motherboard.png" alt="Placa base gaming" fetchpriority="high"></figure>
+        <figure class="component component-gpu"><img src="assets/gpu.png" alt="Tarjeta gráfica gaming" fetchpriority="high"></figure>
+        <figure class="component component-cooler"><img src="assets/cooler.png" alt="Refrigeración líquida para procesador"></figure>
+        <figure class="component component-memory"><img src="assets/memory.png" alt="Memoria RAM gaming"></figure>
+      </div>
+    </section>
+
+
+
+    <section class="home-section recommendations" id="recomendaciones" aria-labelledby="recommend-title">
+      <div class="section-heading"><div><p class="section-kicker">Empieza por el uso</p><h2 id="recommend-title">Una PC para lo que <em>haces.</em></h2></div><p>La recomendación inicial se ajusta a tu presupuesto. Después puedes cambiar cada componente.</p></div>
+      <div class="recommend-grid">
+        <a class="recommend-card" href="configurador.html"><span class="card-mark mark-pink" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11h4m-2-2v4m8-2h.01M18 9h.01M7 17l-1.5 2a2 2 0 0 1-3.5-1.4l1.2-8A3 3 0 0 1 6.2 7h11.6a3 3 0 0 1 3 2.6l1.2 8a2 2 0 0 1-3.5 1.4L17 17H7Z"/></svg></span><div><h3>Jugar</h3><p>Prioriza la tarjeta gráfica y el rendimiento por dólar.</p></div><span class="card-link">Explorar <b>↗</b></span></a>
+        <a class="recommend-card" href="configurador.html"><span class="card-mark mark-purple" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6 4 4M4 20l4.5-1 10-10a2.8 2.8 0 0 0-4-4l-10 10L4 20Z"/><path d="M12 20h8"/></svg></span><div><h3>Crear</h3><p>Equilibra procesador, memoria y almacenamiento rápido.</p></div><span class="card-link">Explorar <b>↗</b></span></a>
+        <a class="recommend-card" href="configurador.html"><span class="card-mark mark-silver" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m-13 5h18m-11 0v2h4v-2"/></svg></span><div><h3>Estudiar y trabajar</h3><p>Elige una configuración ágil para tus tareas diarias.</p></div><span class="card-link">Explorar <b>↗</b></span></a>
+      </div>
+    </section>
+
+    <section class="home-section parts-section" id="piezas" aria-labelledby="parts-title">
+      <div class="section-heading"><div><p class="section-kicker">Elige cada pieza</p><h2 id="parts-title">Construye desde <em>adentro.</em></h2></div><a class="text-link" href="configurador.html">Ver todos los componentes <span>↗</span></a></div>
+      <div class="parts-grid">
+        <a class="part-card" href="configurador.html"><div class="part-art"><img src="assets/gpu.png" alt="" loading="lazy"></div><div class="part-meta"><span>Gráficos</span><b>Tarjetas de video</b><i>Explorar piezas ↗</i></div></a>
+        <a class="part-card" href="configurador.html"><div class="part-art"><img src="assets/motherboard.png" alt="" loading="lazy"></div><div class="part-meta"><span>Base del sistema</span><b>Placas madre</b><i>Explorar piezas ↗</i></div></a>
+        <a class="part-card" href="configurador.html"><div class="part-art"><img src="assets/memory.png" alt="" loading="lazy"></div><div class="part-meta"><span>Velocidad</span><b>Memoria y RAM</b><i>Explorar piezas ↗</i></div></a>
+        <a class="part-card" href="configurador.html"><div class="part-art"><img src="assets/cooler.png" alt="" loading="lazy"></div><div class="part-meta"><span>Temperatura</span><b>Refrigeración</b><i>Explorar piezas ↗</i></div></a>
+      </div>
+    </section>
+
+    <section class="launch-offer" id="promociones" aria-labelledby="offer-title"><div class="offer-symbol" aria-hidden="true">%</div><div><p class="section-kicker">Promociones y oportunidades</p><h2 id="offer-title">Compara precios antes de decidir.</h2><p>Encuentra componentes para tu presupuesto y revisa el precio y la disponibilidad en cada tienda. Las ofertas cambian según el proveedor; ALIUM no muestra descuentos inventados.</p></div><a class="build-button" href="configurador.html">Buscar componentes <span aria-hidden="true">↗</span></a></section>
+
+    <footer class="home-footer"><a href="index.html">ALIUM</a><span>Elige. Configura. Construye.</span><a href="montaje.html">¿Prefieres que la armemos? <b>Conoce el montaje ↗</b></a></footer>
+  </main>
+  <script src="assets/home.js" defer></script>
+</body>
+</html>
+
+
+
+

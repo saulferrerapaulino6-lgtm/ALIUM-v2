@@ -45,7 +45,7 @@ async function getEbayAccessToken() {
   const clientId = process.env.EBAY_CLIENT_ID;
   const clientSecret = process.env.EBAY_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
-    const error = new Error('Configura EBAY_CLIENT_ID y EBAY_CLIENT_SECRET en el archivo .env local.');
+    const error = new Error('La búsqueda de eBay aún no está configurada en el servidor.');
     error.status = 503;
     throw error;
   }

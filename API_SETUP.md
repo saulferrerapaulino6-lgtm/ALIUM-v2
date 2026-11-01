@@ -11,6 +11,19 @@ La búsqueda de eBay usa el Browse API y un token de aplicación que genera el s
 
 Si no hay claves configuradas, la interfaz seguirá mostrando el catálogo de ejemplo y explicará cómo habilitar la consulta real. No se necesita una base de datos para esta primera integración: eBay devuelve listados al momento y la selección permanece en el navegador.
 
+## Configuración en Render
+
+En el servicio `alium-pc-builder`, abre **Environment** y crea estas variables privadas:
+
+- `EBAY_CLIENT_ID`: App ID / Client ID de Production.
+- `EBAY_CLIENT_SECRET`: Cert ID / Client Secret de Production.
+- `EBAY_ENV`: `production`.
+- `EBAY_MARKETPLACE_ID`: `EBAY_US`.
+
+Guarda los cambios para que Render reinicie el servicio. No agregues las claves a GitHub, al HTML, al JavaScript del navegador ni a capturas o mensajes.
+
+Antes de usar la API de compra en producción, confirma en tu cuenta de eBay Developer qué acceso requiere tu aplicación. eBay distingue el Browse API de otros Buy APIs restringidos y sus requisitos pueden depender del tipo de uso; revisa el formulario y las condiciones vigentes.
+
 ## Alcance y límites
 
 - El precio y la imagen vienen de la publicación de eBay consultada; la disponibilidad y el precio pueden cambiar.

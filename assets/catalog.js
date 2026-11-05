@@ -11,38 +11,38 @@ const CATEGORIES=[
 {id:"os",name:"Sistema operativo",label:"Sistemas operativos",required:false},
 {id:"monitor",name:"Monitor",label:"Monitores",required:false}];
 const PRODUCTS=[
-{id:"cpu-r5-5600g",category:"cpu",name:"Ryzen 5 5600G",brand:"AMD",platform:"AMD",spec:"6 núcleos · AM4 · gráficos integrados",socket:"AM4",memory:"DDR4",watts:65,igpu:true,tier:1,price:115,seller:"Amazon"},
+{id:"cpu-r5-5600g",category:"cpu",name:"Ryzen 5 5600G",brand:"AMD",platform:"AMD",spec:"6 núcleos · AM4 · gráficos integrados",socket:"AM4",memory:"DDR4",watts:65,igpu:true,tier:1,price:115,seller:"Precio de ejemplo"},
 {id:"cpu-r5-7600",category:"cpu",name:"Ryzen 5 7600",brand:"AMD",platform:"AMD",spec:"6 núcleos · AM5 · 5.1 GHz",socket:"AM5",memory:"DDR5",watts:65,igpu:true,tier:2,price:185,seller:"Newegg"},
-{id:"cpu-r7-7800x3d",category:"cpu",name:"Ryzen 7 7800X3D",brand:"AMD",platform:"AMD",spec:"8 núcleos · AM5 · gaming",socket:"AM5",memory:"DDR5",watts:120,igpu:true,tier:3,price:420,seller:"Amazon"},
+{id:"cpu-r7-7800x3d",category:"cpu",name:"Ryzen 7 7800X3D",brand:"AMD",platform:"AMD",spec:"8 núcleos · AM5 · gaming",socket:"AM5",memory:"DDR5",watts:120,igpu:true,tier:3,price:420,seller:"Precio de ejemplo"},
 {id:"cpu-i3-12100",category:"cpu",name:"Core i3-12100",brand:"Intel",platform:"Intel",spec:"4 núcleos · LGA1700 · gráficos integrados",socket:"LGA1700",memory:"DDR4",watts:60,igpu:true,tier:1,price:115,seller:"eBay"},
-{id:"cpu-i5-14400",category:"cpu",name:"Core i5-14400",brand:"Intel",platform:"Intel",spec:"10 núcleos · LGA1700 · gráficos integrados",socket:"LGA1700",memory:"DDR5",watts:65,igpu:true,tier:2,price:215,seller:"Amazon"},
+{id:"cpu-i5-14400",category:"cpu",name:"Core i5-14400",brand:"Intel",platform:"Intel",spec:"10 núcleos · LGA1700 · gráficos integrados",socket:"LGA1700",memory:"DDR5",watts:65,igpu:true,tier:2,price:215,seller:"Precio de ejemplo"},
 {id:"cpu-i7-14700k",category:"cpu",name:"Core i7-14700K",brand:"Intel",platform:"Intel",spec:"20 núcleos · LGA1700 · 5.6 GHz",socket:"LGA1700",memory:"DDR5",watts:125,igpu:true,tier:3,price:385,seller:"Newegg"},
-{id:"cooler-pa120",category:"cooler",name:"Peerless Assassin 120 SE",brand:"Thermalright",spec:"Doble torre · 2 ventiladores",supports:["AM4","AM5","LGA1700"],tier:1,price:35,seller:"Amazon"},
+{id:"cooler-pa120",category:"cooler",name:"Peerless Assassin 120 SE",brand:"Thermalright",spec:"Doble torre · 2 ventiladores",supports:["AM4","AM5","LGA1700"],tier:1,price:35,seller:"Precio de ejemplo"},
 {id:"cooler-ak620",category:"cooler",name:"AK620 Digital",brand:"DeepCool",spec:"Doble torre · pantalla digital",supports:["AM4","AM5","LGA1700"],tier:2,price:68,seller:"Newegg"},
-{id:"cooler-liquid",category:"cooler",name:"Liquid Freezer III 360",brand:"ARCTIC",spec:"Refrigeración líquida · radiador 360 mm",supports:["AM4","AM5","LGA1700"],radiator:360,tier:3,price:105,seller:"Amazon"},
-{id:"mb-b450",category:"motherboard",name:"B450M DS3H",brand:"Gigabyte",spec:"Micro-ATX · AM4 · DDR4",socket:"AM4",memory:"DDR4",form:"Micro-ATX",tier:1,price:88,seller:"Amazon"},
+{id:"cooler-liquid",category:"cooler",name:"Liquid Freezer III 360",brand:"ARCTIC",spec:"Refrigeración líquida · radiador 360 mm",supports:["AM4","AM5","LGA1700"],radiator:360,tier:3,price:105,seller:"Precio de ejemplo"},
+{id:"mb-b450",category:"motherboard",name:"B450M DS3H",brand:"Gigabyte",spec:"Micro-ATX · AM4 · DDR4",socket:"AM4",memory:"DDR4",form:"Micro-ATX",tier:1,price:88,seller:"Precio de ejemplo"},
 {id:"mb-b650",category:"motherboard",name:"B650 Eagle AX",brand:"Gigabyte",spec:"ATX · AM5 · DDR5 · Wi-Fi",socket:"AM5",memory:"DDR5",form:"ATX",tier:2,price:175,seller:"Newegg"},
-{id:"mb-b760",category:"motherboard",name:"B760 Gaming Plus WiFi",brand:"MSI",spec:"ATX · LGA1700 · DDR5 · Wi-Fi",socket:"LGA1700",memory:"DDR5",form:"ATX",tier:2,price:165,seller:"Amazon"},
+{id:"mb-b760",category:"motherboard",name:"B760 Gaming Plus WiFi",brand:"MSI",spec:"ATX · LGA1700 · DDR5 · Wi-Fi",socket:"LGA1700",memory:"DDR5",form:"ATX",tier:2,price:165,seller:"Precio de ejemplo"},
 {id:"mb-z790",category:"motherboard",name:"Z790 AORUS Elite AX",brand:"Gigabyte",spec:"ATX · LGA1700 · DDR5",socket:"LGA1700",memory:"DDR5",form:"ATX",tier:3,price:245,seller:"Newegg"},
-{id:"ram-ddr4",category:"memory",name:"Vengeance LPX 16 GB",brand:"Corsair",spec:"2 × 8 GB · DDR4 · 3200 MT/s",memory:"DDR4",tier:1,price:42,seller:"Amazon"},
+{id:"ram-ddr4",category:"memory",name:"Vengeance LPX 16 GB",brand:"Corsair",spec:"2 × 8 GB · DDR4 · 3200 MT/s",memory:"DDR4",tier:1,price:42,seller:"Precio de ejemplo"},
 {id:"ram-ddr5-32",category:"memory",name:"Vengeance 32 GB",brand:"Corsair",spec:"2 × 16 GB · DDR5 · 6000 MT/s",memory:"DDR5",tier:2,price:92,seller:"Newegg"},
-{id:"ram-ddr5-64",category:"memory",name:"Flare X5 64 GB",brand:"G.Skill",spec:"2 × 32 GB · DDR5 · 6000 MT/s",memory:"DDR5",tier:3,price:175,seller:"Amazon"},
+{id:"ram-ddr5-64",category:"memory",name:"Flare X5 64 GB",brand:"G.Skill",spec:"2 × 32 GB · DDR5 · 6000 MT/s",memory:"DDR5",tier:3,price:175,seller:"Precio de ejemplo"},
 {id:"ssd-500",category:"storage",name:"NV2 500 GB",brand:"Kingston",spec:"M.2 NVMe · PCIe 4.0",tier:1,price:38,seller:"Newegg"},
-{id:"ssd-1tb",category:"storage",name:"990 EVO 1 TB",brand:"Samsung",spec:"M.2 NVMe · PCIe 4.0",tier:2,price:82,seller:"Amazon"},
-{id:"ssd-2tb",category:"storage",name:"SN850X 2 TB",brand:"WD_BLACK",spec:"M.2 NVMe · PCIe 4.0",tier:3,price:145,seller:"Amazon"},
+{id:"ssd-1tb",category:"storage",name:"990 EVO 1 TB",brand:"Samsung",spec:"M.2 NVMe · PCIe 4.0",tier:2,price:82,seller:"Precio de ejemplo"},
+{id:"ssd-2tb",category:"storage",name:"SN850X 2 TB",brand:"WD_BLACK",spec:"M.2 NVMe · PCIe 4.0",tier:3,price:145,seller:"Precio de ejemplo"},
 {id:"gpu-integrated",category:"gpu",name:"Gráficos integrados",brand:"Integrada",spec:"Usa los gráficos del procesador · sin tarjeta dedicada",watts:0,minPsu:0,integrated:true,tier:1,price:0,seller:"Incluido en CPU"},
 {id:"gpu-arc",category:"gpu",name:"Arc B580 12 GB",brand:"Intel",spec:"12 GB · HDMI / DisplayPort · 190 W",watts:190,minPsu:600,length:272,tier:1,price:260,seller:"Newegg"},
-{id:"gpu-7800xt",category:"gpu",name:"Radeon RX 7800 XT",brand:"Sapphire",spec:"16 GB · 263 W · Triple ventilador",watts:263,minPsu:700,length:320,tier:2,price:500,seller:"Amazon"},
+{id:"gpu-7800xt",category:"gpu",name:"Radeon RX 7800 XT",brand:"Sapphire",spec:"16 GB · 263 W · Triple ventilador",watts:263,minPsu:700,length:320,tier:2,price:500,seller:"Precio de ejemplo"},
 {id:"gpu-4070s",category:"gpu",name:"GeForce RTX 4070 SUPER",brand:"ASUS",spec:"12 GB · 220 W · DLSS",watts:220,minPsu:650,length:301,tier:3,price:620,seller:"Newegg"},
-{id:"case-matx",category:"case",name:"Box M100R",brand:"Cooler Master",spec:"Micro-ATX · GPU hasta 330 mm",forms:["Micro-ATX","Mini-ITX"],clearance:330,tier:1,price:62,seller:"Amazon"},
+{id:"case-matx",category:"case",name:"Box M100R",brand:"Cooler Master",spec:"Micro-ATX · GPU hasta 330 mm",forms:["Micro-ATX","Mini-ITX"],clearance:330,tier:1,price:62,seller:"Precio de ejemplo"},
 {id:"case-4000d",category:"case",name:"4000D Airflow",brand:"Corsair",spec:"ATX · GPU hasta 360 mm",forms:["ATX","Micro-ATX","Mini-ITX"],clearance:360,tier:2,price:98,seller:"Newegg"},
-{id:"case-h7",category:"case",name:"H7 Flow",brand:"NZXT",spec:"ATX · GPU hasta 400 mm",forms:["E-ATX","ATX","Micro-ATX","Mini-ITX"],clearance:400,tier:3,price:135,seller:"Amazon"},
-{id:"psu-550",category:"psu",name:"CX550",brand:"Corsair",spec:"550 W · 80 PLUS Bronze",watts:550,tier:1,price:62,seller:"Amazon"},
+{id:"case-h7",category:"case",name:"H7 Flow",brand:"NZXT",spec:"ATX · GPU hasta 400 mm",forms:["E-ATX","ATX","Micro-ATX","Mini-ITX"],clearance:400,tier:3,price:135,seller:"Precio de ejemplo"},
+{id:"psu-550",category:"psu",name:"CX550",brand:"Corsair",spec:"550 W · 80 PLUS Bronze",watts:550,tier:1,price:62,seller:"Precio de ejemplo"},
 {id:"psu-750",category:"psu",name:"RM750e",brand:"Corsair",spec:"750 W · 80 PLUS Gold · modular",watts:750,tier:2,price:105,seller:"Newegg"},
-{id:"psu-850",category:"psu",name:"MAG A850GL",brand:"MSI",spec:"850 W · 80 PLUS Gold · modular",watts:850,tier:3,price:125,seller:"Amazon"},
+{id:"psu-850",category:"psu",name:"MAG A850GL",brand:"MSI",spec:"850 W · 80 PLUS Gold · modular",watts:850,tier:3,price:125,seller:"Precio de ejemplo"},
 {id:"os-home",category:"os",name:"Windows 11 Home",brand:"Microsoft",spec:"Licencia digital · 64 bits",tier:2,price:120,seller:"Microsoft"},
 {id:"os-linux",category:"os",name:"Ubuntu Desktop",brand:"Canonical",spec:"Sistema operativo · descarga gratuita",tier:1,price:0,seller:"Canonical"},
-{id:"monitor-fhd",category:"monitor",name:"TUF Gaming VG249Q1A",brand:"ASUS",spec:"24 pulgadas · Full HD · 165 Hz",tier:1,price:160,seller:"Amazon"},
+{id:"monitor-fhd",category:"monitor",name:"TUF Gaming VG249Q1A",brand:"ASUS",spec:"24 pulgadas · Full HD · 165 Hz",tier:1,price:160,seller:"Precio de ejemplo"},
 {id:"monitor-qhd",category:"monitor",name:"G27Q",brand:"Gigabyte",spec:"27 pulgadas · QHD · 144 Hz",tier:2,price:250,seller:"Newegg"}];
 const REQUIRED=CATEGORIES.filter(c=>c.required).map(c=>c.id);
 let chosen={},activeCategory="cpu",step=0,exchangeRate=60.84,rateDate="29/10/2026",ebayProducts=[],ebayCategory="",liveSearchMode=false,cartItems=[];
@@ -69,7 +69,7 @@ if(product.category==="case"){if(board&&product.forms.indexOf(board.form)<0)retu
 if(product.category==="gpu"){if(product.integrated&&cpu&&!cpu.igpu)return bad("El procesador no tiene gráficos integrados");if(!product.integrated&&psu&&psu.watts<(cpu?cpu.watts:0)+(product.watts||0)+150)return bad("La fuente tiene poca potencia");if(!product.integrated&&pcCase&&product.length>pcCase.clearance)return bad("La gráfica supera el espacio del case");return psu||pcCase?ok:pending("Elige fuente y case para revisar potencia y espacio")}
 if(product.category==="psu"){const w=(cpu?cpu.watts:0)+(gpu&&!gpu.integrated?gpu.watts:0)+150;if(cpu&&gpu&&product.watts<w*1.2)return bad("Se recomienda una fuente de al menos "+Math.ceil(w*1.2)+" W");return cpu&&gpu?ok:pending("Elige procesador y gráfica para calcular potencia")}
 return ok}
-function rowPrice(product){if(product.isLive){if(product.currency==="USD")return formatMoney(product.price);return product.currency+" "+new Intl.NumberFormat("en-US",{maximumFractionDigits:2}).format(product.price)}return product.price?formatMoney(product.price):"Incluido"}
+function rowPrice(product){if(product.isLive){if(product.currency==="USD")return formatMoney(product.price);return escapeHTML(product.currency)+" "+new Intl.NumberFormat("en-US",{maximumFractionDigits:2}).format(product.price)}return product.price?formatMoney(product.price):"Incluido"}
 function escapeHTML(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]))}
 function safeProductUrl(value){try{const url=new URL(value);return url.protocol==="https:"?url.href:""}catch{return ""}}
 function renderCart(){const items=$("cart-items");$("cart-count").textContent=String(cartItems.length);if(!cartItems.length){items.innerHTML='<div class="cart-empty">Tu carrito está vacío. Añade las piezas elegidas para reunir tu PC.</div>';$ ("cart-total").textContent=formatMoney(0);$("cart-disclaimer").hidden=true;$("cart-summary").textContent="Reúne aquí las piezas elegidas.";return}const example=cartItems.some(p=>!p.isLive),total=cartItems.reduce((sum,p)=>sum+(Number(p.price)||0),0);items.innerHTML=cartItems.map(p=>{const url=safeProductUrl(p.itemUrl)||"https://www.ebay.com/sch/i.html?_nkw="+encodeURIComponent(p.name);return '<article class="cart-line"><span><b>'+escapeHTML(CATEGORIES.find(c=>c.id===p.category)?.name||p.category)+': '+escapeHTML(p.name)+'</b><small>'+escapeHTML(p.brand||"")+(p.isLive?" · eBay":" · Precio de ejemplo")+'</small></span><b>'+rowPrice(p)+'</b><a href="'+url+'" target="_blank" rel="noopener noreferrer">'+(p.isLive?"Ver publicación en eBay ↗":"Buscar este modelo en eBay ↗")+'</a></article>'}).join("");$("cart-total").textContent=formatMoney(total);$("cart-disclaimer").hidden=!example;$("cart-summary").textContent=cartItems.length+" piezas seleccionadas"}
@@ -109,5 +109,29 @@ applyTheme(safeGet("alium_theme")||"dark");applyCurrency(safeGet("alium_currency
 
 
 const loginDialog=$("login-dialog");
-$("login-open").addEventListener("click",()=>loginDialog.showModal());
-$("login-submit").addEventListener("click",()=>{const form=$("login-form");const inputs=form.querySelectorAll("input");if(!inputs[0].reportValidity()||!inputs[1].reportValidity())return;$("login-note").textContent="La interfaz está lista; ALIUM todavía debe conectar un servicio seguro de cuentas."});
+const saveDialog=$("save-dialog");
+let currentUser=null,pendingSave=false;
+
+function showToast(message,isError){const element=$("alium-toast");if(!element)return;element.textContent=message;element.classList.toggle("error",Boolean(isError));element.classList.add("show");clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>element.classList.remove("show"),4000)}
+function updateAccountUI(){const button=$("login-open");const label=button?button.querySelector("span"):null;if(currentUser){if(label)label.textContent=(currentUser.name||"Mi cuenta").split(" ")[0].slice(0,16);if(button){button.title="Mi cuenta";button.setAttribute("aria-label","Mi cuenta de ALIUM")}}else{if(label)label.textContent="Iniciar sesión";if(button){button.title="Iniciar sesión";button.setAttribute("aria-label","Iniciar sesión")}}}
+async function loadAccount(){try{const response=await fetch("/api/auth/me");const data=await response.json();currentUser=data.user||null}catch{currentUser=null}updateAccountUI()}
+function buildParts(){return CATEGORIES.filter(cat=>chosen[cat.id]).map(cat=>({category:cat.id,...chosen[cat.id]}))}
+function openSaveDialog(){const parts=buildParts();if(!parts.length)return alert("Primero elige al menos una pieza para guardar tu PC.");if(!currentUser){pendingSave=true;loginDialog.showModal();return}const total=parts.reduce((sum,part)=>sum+(Number(part.price)||0),0);$("save-name").value="Mi PC "+state.cpu+" · "+new Date().toLocaleDateString("es-DO",{day:"2-digit",month:"short"});$("save-summary").textContent=parts.length+" piezas · "+formatMoney(total)+" · Se guardará una foto de esta configuración.";$("save-message").textContent="";saveDialog.showModal()}
+
+$("login-open").addEventListener("click",()=>{if(currentUser)window.location.href="cuenta.html";else loginDialog.showModal()});
+$("login-close").addEventListener("click",()=>loginDialog.close());
+$("save-close").addEventListener("click",()=>saveDialog.close());
+$("save-build").addEventListener("click",openSaveDialog);
+$("save-build-top").addEventListener("click",openSaveDialog);
+
+$("login-form").addEventListener("submit",async event=>{event.preventDefault();const email=$("login-email").value.trim(),password=$("login-password").value,message=$("login-message"),button=$("login-submit");if(!email||!password){message.textContent="Escribe tu correo y tu contraseña.";return}button.disabled=true;button.textContent="Entrando…";message.textContent="";try{const response=await fetch("/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||"No se pudo iniciar sesión.");currentUser=data.user;updateAccountUI();loginDialog.close();$("login-password").value="";message.textContent="";showToast("Sesión iniciada. Ya puedes guardar tus PCs.");if(pendingSave){pendingSave=false;openSaveDialog()}}catch(error){message.textContent=error.message}finally{button.disabled=false;button.textContent="Iniciar sesión"}});
+
+$("save-form").addEventListener("submit",async event=>{event.preventDefault();if(!currentUser){saveDialog.close();loginDialog.showModal();return}const parts=buildParts();if(!parts.length)return;const name=$("save-name").value.trim();if(!name){$("save-message").textContent="Ponle un nombre a tu PC.";return}const button=$("save-submit");button.disabled=true;button.textContent="Guardando…";$("save-message").textContent="";try{const response=await fetch("/api/builds",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,platform:state.cpu||null,use:state.use||null,tier:state.tier||null,budget:state.budgetUsd||null,parts})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||"No se pudo guardar la PC.");saveDialog.close();showToast("PC guardada en tu cuenta.")}catch(error){$("save-message").textContent=error.message}finally{button.disabled=false;button.textContent="Guardar en mi cuenta"}});
+
+function restoreSavedBuild(){const raw=safeGet("alium_saved_build");if(!raw)return;try{const build=JSON.parse(raw);if(!build||!Array.isArray(build.parts)||!build.parts.length)throw new Error("vacío");safeSet("alium_saved_build","");state.cpu=build.platform||"";state.use=build.use||"";state.tier=build.tier||"";state.budgetUsd=Number(build.budget)||0;state.budget=state.currency==="DOP"?state.budgetUsd*exchangeRate:state.budgetUsd;if($("budget"))$("budget").value=state.budget?String(Math.round(state.budget)):"";chosen={};build.parts.forEach(part=>{if(part&&part.category)chosen[part.category]=part});updateChoices();steps.forEach(element=>element.hidden=true);const title=document.querySelector(".section-title");if(title)title.hidden=true;progress.style.width="100%";$("results").hidden=false;renderResults();showToast("Cargamos tu PC guardada.");document.querySelector(".builder").scrollIntoView({behavior:"smooth",block:"start"})}catch{safeSet("alium_saved_build","")}}
+
+async function checkProviderStatus(){const status=document.getElementById('provider-status');if(!status)return;try{const response=await fetch('/api/providers/status');const data=await response.json();status.textContent=data.ebay?.configured?'eBay está configurado. Busca un componente para consultar publicaciones y precios actuales.':'eBay aún no está configurado en el servidor. Añade EBAY_CLIENT_ID y EBAY_CLIENT_SECRET en Environment de Render.'}catch{status.textContent='No se pudo comprobar el estado de eBay. Intenta buscar de nuevo en unos segundos.'}}
+
+loadAccount();
+restoreSavedBuild();
+checkProviderStatus();

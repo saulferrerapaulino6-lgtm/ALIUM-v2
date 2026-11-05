@@ -1,35 +1,33 @@
-# Proveedor eBay para ALIUM
+# Proveedores y precios reales de ALIUM
 
-La búsqueda de eBay usa el Browse API y un token de aplicación que genera el servidor. Las claves privadas no deben ponerse en HTML/JavaScript del navegador ni compartirse por chat.
+## Estado actual
 
-## Configuración local
+- **eBay Browse API:** el servidor ya admite consultas reales. En Render faltan las credenciales privadas `EBAY_CLIENT_ID` y `EBAY_CLIENT_SECRET`; por eso las búsquedas responden que el proveedor no está configurado.
+- **Amazon:** la integración no está activada. Amazon sustituyó PA-API por **Creators API**. Antes de mostrar sus precios o imágenes en ALIUM, hace falta confirmar la aprobación de Amazon para este caso de uso.
+- Los precios del catálogo incluido en ALIUM son referencias de ejemplo. No son ofertas de Amazon ni cotizaciones actuales.
 
-1. Crea una aplicación en el portal de desarrolladores de eBay y abre sus claves del entorno **Production**. Para hacer pruebas usa Sandbox y configura `EBAY_ENV=sandbox`.
-2. Copia `.env.example` como `.env` en la carpeta raíz del proyecto.
-3. Pega el **App ID / Client ID** en `EBAY_CLIENT_ID` y el **Cert ID / Client Secret** en `EBAY_CLIENT_SECRET`. Mantén ambas claves privadas en tu equipo.
-4. Guarda `.env`, reinicia el servidor de ALIUM y abre el configurador. En “Tu PC para personalizar”, busca un componente y pulsa **Buscar en eBay**.
+## Activar eBay en Render
 
-Si no hay claves configuradas, la interfaz seguirá mostrando el catálogo de ejemplo y explicará cómo habilitar la consulta real. No se necesita una base de datos para esta primera integración: eBay devuelve listados al momento y la selección permanece en el navegador.
+1. Abre el servicio `alium-pc-builder` y ve a **Environment**.
+2. Añade `EBAY_CLIENT_ID` y `EBAY_CLIENT_SECRET` con las credenciales de **Production** creadas en eBay Developer.
+3. Confirma que `EBAY_ENV=production` y `EBAY_MARKETPLACE_ID=EBAY_US`.
+4. Guarda los cambios. Render reiniciará el servicio. Luego prueba una búsqueda de producto en el configurador.
 
-## Configuración en Render
+No pegues credenciales en el chat, GitHub, HTML, JavaScript público ni capturas. El servidor no revela los valores de las variables; el indicador del configurador solo informa si eBay tiene ambas claves.
 
-En el servicio `alium-pc-builder`, abre **Environment** y crea estas variables privadas:
+Para trabajar localmente, copia `.env.example` a `.env`, introduce las claves allí y reinicia `npm start`. `.env` está excluido de Git.
 
-- `EBAY_CLIENT_ID`: App ID / Client ID de Production.
-- `EBAY_CLIENT_SECRET`: Cert ID / Client Secret de Production.
-- `EBAY_ENV`: `production`.
-- `EBAY_MARKETPLACE_ID`: `EBAY_US`.
+## Amazon: requisito antes de integrar
 
-Guarda los cambios para que Render reinicie el servicio. No agregues las claves a GitHub, al HTML, al JavaScript del navegador ni a capturas o mensajes.
+La API vigente es [Amazon Creators API](https://affiliate-program.amazon.com/creatorsapi/docs/en-us/introduction), no la antigua PA-API. Amazon requiere inscripción en Associates para el marketplace, acceso a Creators API y credenciales. Su documentación actual indica además que se necesitan 10 ventas calificadas en los 30 días previos para el acceso de API.
 
-Antes de usar la API de compra en producción, confirma en tu cuenta de eBay Developer qué acceso requiere tu aplicación. eBay distingue el Browse API de otros Buy APIs restringidos y sus requisitos pueden depender del tipo de uso; revisa el formulario y las condiciones vigentes.
+Antes de integrar ALIUM, solicita confirmación escrita a Amazon de que permite este uso concreto: un configurador que compara componentes de varios proveedores y que se adapta a móviles. Las políticas de Amazon restringen mostrar Product Advertising Content en aplicaciones pensadas para teléfonos sin aprobación previa y prohíben asociar ese contenido con enlaces que dirijan a otros comercios. Revisa [las políticas oficiales](https://affiliate-program.amazon.com/help/operating/policies) y confirma expresamente el caso de comparación de ALIUM. Sin esa aprobación, no se deben presentar aquí sus fotos, precios ni disponibilidad como datos reales.
 
-## Alcance y límites
+Una vez autorizado, se necesitarán credenciales de Creators API y un Partner Tag válidos para el marketplace elegido. Se guardarán únicamente en variables privadas de Render. Las imágenes no se pueden almacenar en caché; los datos de precio y disponibilidad requieren sello de fecha/hora y el aviso exigido por Amazon.
 
-- El precio y la imagen vienen de la publicación de eBay consultada; la disponibilidad y el precio pueden cambiar.
-- El configurador marca la compatibilidad de publicaciones externas como **Pendiente**. Revisa socket, memoria, dimensiones, envío, impuestos y courier en la página del vendedor antes de comprar.
-- El total orientativo del configurador está pensado para publicaciones en USD. La búsqueda inicial usa el marketplace de Estados Unidos (`EBAY_US`); no estima impuestos ni el costo de courier a República Dominicana.
-- Los enlaces usan el enlace de publicación devuelto por eBay. Los enlaces de afiliado requieren una cuenta y configuración del programa EPN.
-- Antes de publicar la integración, revisa las reglas vigentes de la API, atribución, uso de imágenes y límites de consulta de eBay.
+## Límites del catálogo
 
-Documentación oficial: [Browse API](https://developer.ebay.com/develop/api/buy/browse_api) · [OAuth credentials](https://developer.ebay.com/api-docs/static/oauth-credentials.html)
+- Las ofertas y existencias pueden cambiar; verifica el precio final en el comercio.
+- En eBay la compatibilidad de publicaciones externas queda pendiente hasta revisar modelo, socket, memoria, medidas, envío e impuestos.
+- La consulta actual de eBay usa el marketplace `EBAY_US`; el configurador no estima impuestos ni courier a República Dominicana.
+- Las cuentas e historial de PCs usan una base de datos PostgreSQL gratuita de Neon. Las consultas de proveedores siguen haciéndose al vuelo; la base de datos solo guarda usuarios, sesiones y las PCs que cada persona decide guardar. Ver `CUENTAS.md`.

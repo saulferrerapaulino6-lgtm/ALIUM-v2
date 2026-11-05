@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090910">
+<meta name="description" content="Crea tu cuenta de ALIUM y guarda el historial de las PCs que armas.">
+<title>ALIUM — Mi cuenta</title>
+<link rel="stylesheet" href="assets/cuenta.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="nav">
+    <a class="brand" href="index.html" aria-label="ALIUM, inicio"><img class="brand-logo" src="assets/alium-as.png" alt=""><span>ALIUM</span></a>
+    <div class="tools">
+      <a href="configurador.html">Configurador</a>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Cambiar tema" title="Cambiar tema">☼</button>
+    </div>
+  </div>
+</header>
+
+<main class="account-wrap">
+  <section class="intro">
+    <span class="eyebrow"><i></i> TU ESPACIO EN ALIUM</span>
+    <h1>Guarda tus PCs.<br><span>Vuelve a ellas.</span></h1>
+    <p>Crea una cuenta gratis para conservar cada configuración, revisar sus piezas y retomarla cuando quieras.</p>
+  </section>
+
+  <div class="notice" id="accounts-warning" role="status" hidden></div>
+
+  <section class="panel" id="auth-view" aria-labelledby="auth-title">
+    <div class="tabs" role="tablist" aria-label="Acceso a tu cuenta">
+      <button type="button" data-mode="register" class="active" role="tab" aria-selected="true">Crear cuenta</button>
+      <button type="button" data-mode="login" role="tab" aria-selected="false">Iniciar sesión</button>
+    </div>
+    <h2 id="auth-title">Empieza tu historial</h2>
+    <p class="panel-sub" id="auth-subtitle">Solo necesitas un correo y una contraseña. Es gratis.</p>
+
+    <form id="auth-form" novalidate>
+      <label id="name-field">Nombre
+        <input id="auth-name" type="text" autocomplete="name" maxlength="60" placeholder="Cómo quieres que te llamemos">
+      </label>
+      <label>Correo electrónico
+        <input id="auth-email" type="email" autocomplete="email" maxlength="254" placeholder="tu@correo.com" required>
+      </label>
+      <label>Contraseña
+        <input id="auth-password" type="password" autocomplete="new-password" minlength="8" maxlength="200" placeholder="Mínimo 8 caracteres" required>
+      </label>
+      <label id="confirm-field">Repetir contraseña
+        <input id="auth-confirm" type="password" autocomplete="new-password" maxlength="200" placeholder="Escríbela otra vez">
+      </label>
+      <p class="form-message" id="auth-message" role="alert"></p>
+      <button class="button primary" id="auth-submit" type="submit">Crear mi cuenta</button>
+      <p class="legal">Guardamos tu nombre, tu correo, tu contraseña cifrada y las PCs que decidas guardar. <a href="privacidad.html">Cómo cuidamos tus datos</a>.</p>
+    </form>
+  </section>
+
+  <section id="profile-view" hidden>
+    <div class="profile">
+      <div class="avatar" id="profile-initial" aria-hidden="true">A</div>
+      <div class="profile-info">
+        <h2 id="profile-name">Tu cuenta</h2>
+        <p id="profile-email"></p>
+        <small id="profile-since"></small>
+      </div>
+      <div class="profile-actions">
+        <a class="button primary" href="configurador.html">Armar una PC</a>
+        <button class="button quiet" id="logout" type="button">Cerrar sesión</button>
+      </div>
+    </div>
+
+    <div class="builds-head">
+      <div><h2>Mis PCs guardadas</h2><p id="builds-count">0 configuraciones</p></div>
+      <a class="text-link" href="configurador.html">+ Nueva PC</a>
+    </div>
+
+    <div id="builds-list" class="builds-list"></div>
+
+    <div class="empty" id="builds-empty" hidden>
+      <b>Todavía no has guardado ninguna PC.</b>
+      <p>Arma una en el configurador y pulsa “Guardar en mi cuenta”.</p>
+      <a class="button primary" href="configurador.html">Crear mi primera PC</a>
+    </div>
+
+    <div class="danger">
+      <div><b>Eliminar mi cuenta</b><p>Borra tu cuenta y todas tus PCs guardadas. Esta acción no se puede deshacer.</p></div>
+      <button class="button danger-button" id="delete-account" type="button">Eliminar cuenta</button>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <a href="index.html">← Volver al inicio</a>
+  <span>ALIUM · Cuentas e historial</span>
+  <a href="privacidad.html">Privacidad</a>
+</footer>
+
+<dialog class="modal" id="delete-dialog" aria-labelledby="delete-title">
+  <form class="modal-card" id="delete-form">
+    <button class="modal-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+    <h2 id="delete-title">Eliminar mi cuenta</h2>
+    <p>Se borrarán tu cuenta y todas tus PCs guardadas. Escribe tu contraseña para confirmar.</p>
+    <label>Contraseña
+      <input id="delete-password" type="password" autocomplete="current-password" maxlength="200" required>
+    </label>
+    <p class="form-message" id="delete-message" role="alert"></p>
+    <div class="modal-actions">
+      <button class="button quiet" type="button" data-close-dialog>Cancelar</button>
+      <button class="button danger-button" id="delete-confirm" type="submit">Sí, eliminar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="build-dialog" aria-labelledby="build-dialog-title">
+  <div class="modal-card">
+    <button class="modal-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+    <h2 id="build-dialog-title">Piezas de la PC</h2>
+    <p id="build-dialog-sub"></p>
+    <div id="build-dialog-parts" class="modal-parts"></div>
+    <div class="modal-actions">
+      <button class="button quiet" type="button" data-close-dialog>Cerrar</button>
+      <button class="button primary" id="build-dialog-open" type="button">Usar en configurador</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="assets/cuenta.js" defer></script>
+</body>
+</html>

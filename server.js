@@ -1,13 +1,14 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 
 const root = path.resolve(__dirname);
 const mime = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml',
   '.png': 'image/png', '.jpeg': 'image/jpeg', '.jpg': 'image/jpeg',
-  '.webp': 'image/webp', '.ico': 'image/x-icon',
+  '.webp': 'image/webp', '.ico': 'image/x-icon', '.woff2': 'font/woff2',
 };
 
 // Load local secrets without adding a dependency. Never serve .env as a static file.
@@ -30,12 +31,314 @@ const DEFAULT_QUERIES = {
   case: 'desktop PC case', psu: 'PC power supply', os: 'Windows 11 license', monitor: 'gaming monitor',
 };
 const ALLOWED_CATEGORIES = new Set(Object.keys(DEFAULT_QUERIES));
+const SESSION_DAYS = 30;
+const SESSION_COOKIE = 'alium_session';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 let cachedEbayToken = null;
 
-function json(response, status, payload) {
-  response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+/* ------------------------------------------------------------------ */
+/* Base de datos (Neon Postgres)                                       */
+/* ------------------------------------------------------------------ */
+
+let pool = null;
+let dbSetupPromise = null;
+
+const SCHEMA = `
+CREATE TABLE IF NOT EXISTS alium_users (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text NOT NULL UNIQUE,
+  display_name text NOT NULL,
+  password_hash text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS alium_sessions (
+  id text PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES alium_users(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  expires_at timestamptz NOT NULL
+);
+CREATE TABLE IF NOT EXISTS alium_builds (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES alium_users(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  platform text,
+  use_case text,
+  tier text,
+  currency text NOT NULL DEFAULT 'USD',
+  budget numeric(12,2),
+  total numeric(12,2) NOT NULL DEFAULT 0,
+  parts jsonb NOT NULL DEFAULT '[]'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS alium_sessions_user_idx ON alium_sessions(user_id);
+CREATE INDEX IF NOT EXISTS alium_sessions_expiry_idx ON alium_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS alium_builds_user_created_idx ON alium_builds(user_id, created_at DESC);
+`;
+
+function databaseUrl() {
+  return process.env.DATABASE_URL || '';
+}
+
+function getPool() {
+  if (!databaseUrl()) {
+    const error = new Error('Las cuentas todavía no están configuradas en el servidor.');
+    error.status = 503;
+    throw error;
+  }
+  if (!pool) {
+    const { Pool } = require('pg');
+    let connectionString = databaseUrl();
+    if (!/[?&]sslmode=/i.test(connectionString)) {
+      let local = false;
+      try {
+        const host = new URL(connectionString).hostname;
+        local = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+      } catch { /* pg mostrará el error de formato */ }
+      if (!local) connectionString += (connectionString.includes('?') ? '&' : '?') + 'sslmode=require';
+    }
+    pool = new Pool({
+      connectionString,
+      max: 4,
+      idleTimeoutMillis: 10_000,
+      connectionTimeoutMillis: 15_000,
+      application_name: 'alium-web',
+    });
+    pool.on('error', (error) => console.error('[db] error de conexión:', error.message));
+  }
+  return pool;
+}
+
+async function ensureDb() {
+  if (dbSetupPromise) return dbSetupPromise;
+  dbSetupPromise = (async () => {
+    const db = getPool();
+    await db.query(SCHEMA);
+    return db;
+  })().catch((error) => {
+    dbSetupPromise = null;
+    throw error;
+  });
+  return dbSetupPromise;
+}
+
+async function dbQuery(text, params) {
+  const db = await ensureDb();
+  return db.query(text, params);
+}
+
+/* ------------------------------------------------------------------ */
+/* Contraseñas y sesiones                                              */
+/* ------------------------------------------------------------------ */
+
+const SCRYPT = { N: 16384, r: 8, p: 1, keylen: 64 };
+
+function scryptAsync(password, salt, keylen, options) {
+  return new Promise((resolve, reject) => {
+    crypto.scrypt(password, salt, keylen, options, (error, derived) => {
+      if (error) reject(error); else resolve(derived);
+    });
+  });
+}
+
+async function hashPassword(password) {
+  const salt = crypto.randomBytes(16);
+  const derived = await scryptAsync(password, salt, SCRYPT.keylen, { N: SCRYPT.N, r: SCRYPT.r, p: SCRYPT.p, maxmem: 64 * 1024 * 1024 });
+  return ['scrypt', SCRYPT.N, SCRYPT.r, SCRYPT.p, salt.toString('base64url'), derived.toString('base64url')].join('$');
+}
+
+async function verifyPassword(password, stored) {
+  const parts = String(stored || '').split('$');
+  if (parts.length !== 6 || parts[0] !== 'scrypt') return false;
+  const N = Number(parts[1]), r = Number(parts[2]), p = Number(parts[3]);
+  if (!Number.isFinite(N) || !Number.isFinite(r) || !Number.isFinite(p)) return false;
+  const salt = Buffer.from(parts[4], 'base64url');
+  const expected = Buffer.from(parts[5], 'base64url');
+  const derived = await scryptAsync(password, salt, expected.length, { N, r, p, maxmem: 64 * 1024 * 1024 });
+  return derived.length === expected.length && crypto.timingSafeEqual(derived, expected);
+}
+
+let dummyHash = null;
+async function burnPasswordTime(password) {
+  if (!dummyHash) dummyHash = await hashPassword('alium-tiempo-constante');
+  await verifyPassword(password, dummyHash);
+}
+
+function newSessionToken() {
+  return crypto.randomBytes(32).toString('base64url');
+}
+
+function sessionId(token) {
+  return crypto.createHash('sha256').update(String(token)).digest('hex');
+}
+
+function parseCookies(request) {
+  const header = request.headers.cookie || '';
+  const cookies = {};
+  for (const part of header.split(';')) {
+    const index = part.indexOf('=');
+    if (index < 0) continue;
+    const name = part.slice(0, index).trim();
+    if (!name) continue;
+    cookies[name] = decodeURIComponent(part.slice(index + 1).trim());
+  }
+  return cookies;
+}
+
+function isSecureRequest(request) {
+  return request.headers['x-forwarded-proto'] === 'https' || Boolean(request.socket.encrypted);
+}
+
+async function createSession(userId) {
+  const token = newSessionToken();
+  const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
+  await dbQuery('INSERT INTO alium_sessions (id, user_id, expires_at) VALUES ($1, $2, $3)', [sessionId(token), userId, expiresAt]);
+  await dbQuery('DELETE FROM alium_sessions WHERE expires_at < now()').catch(() => {});
+  return token;
+}
+
+function sessionCookie(request, token, maxAge = SESSION_DAYS * 24 * 60 * 60) {
+  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${isSecureRequest(request) ? '; Secure' : ''}`;
+}
+
+function clearSessionCookie(request) {
+  return `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${isSecureRequest(request) ? '; Secure' : ''}`;
+}
+
+async function getSession(request) {
+  const token = parseCookies(request)[SESSION_COOKIE];
+  if (!token) return null;
+  const result = await dbQuery(
+    `SELECT u.id, u.email, u.display_name, u.created_at
+       FROM alium_sessions s
+       JOIN alium_users u ON u.id = s.user_id
+      WHERE s.id = $1 AND s.expires_at > now()`,
+    [sessionId(token)],
+  );
+  return result.rows[0] || null;
+}
+
+function publicUser(row) {
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.display_name,
+    createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Validación, límites y utilidades HTTP                               */
+/* ------------------------------------------------------------------ */
+
+function json(response, status, payload, extraHeaders = {}) {
+  response.writeHead(status, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    ...extraHeaders,
+  });
   response.end(JSON.stringify(payload));
 }
+
+function httpError(status, message) {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+}
+
+const rateBuckets = new Map();
+function rateLimit(key, limit = 12, windowMs = 15 * 60 * 1000) {
+  const now = Date.now();
+  const bucket = rateBuckets.get(key);
+  if (!bucket || bucket.resetAt <= now) {
+    rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  bucket.count += 1;
+  return bucket.count <= limit;
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, bucket] of rateBuckets) if (bucket.resetAt <= now) rateBuckets.delete(key);
+}, 10 * 60 * 1000).unref();
+
+function clientIp(request) {
+  const forwarded = String(request.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return forwarded || request.socket.remoteAddress || 'desconocido';
+}
+
+function readJson(request, limit = 32 * 1024) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks = [];
+    request.on('data', (chunk) => {
+      size += chunk.length;
+      if (size > limit) {
+        reject(httpError(413, 'La solicitud es demasiado grande.'));
+        return;
+      }
+      chunks.push(chunk);
+    });
+    request.on('end', () => {
+      if (!chunks.length) return resolve({});
+      try {
+        const parsed = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('formato');
+        resolve(parsed);
+      } catch {
+        reject(httpError(400, 'Los datos enviados no son válidos.'));
+      }
+    });
+    request.on('error', () => reject(httpError(400, 'No se pudieron leer los datos enviados.')));
+  });
+}
+
+function cleanText(value, max) {
+  if (typeof value !== 'string') return '';
+  return value.trim().replace(/\s+/g, ' ').slice(0, max);
+}
+
+function cleanNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && Math.abs(number) <= 1e9 ? Math.round(number * 100) / 100 : null;
+}
+
+const PART_TEXT_FIELDS = ['id', 'name', 'brand', 'spec', 'seller', 'currency', 'condition', 'itemUrl', 'imageUrl', 'platform', 'socket', 'memory', 'form'];
+const PART_NUMBER_FIELDS = ['price', 'watts', 'tier', 'minPsu', 'length', 'clearance', 'shipping', 'radiator'];
+const PART_BOOL_FIELDS = ['igpu', 'integrated', 'isLive'];
+const PART_ARRAY_FIELDS = ['supports', 'forms'];
+
+function sanitizePart(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const category = cleanText(raw.category, 30);
+  if (!ALLOWED_CATEGORIES.has(category)) return null;
+  const part = { category };
+  for (const field of PART_TEXT_FIELDS) {
+    if (typeof raw[field] === 'string') part[field] = raw[field].slice(0, field === 'itemUrl' || field === 'imageUrl' ? 1_000 : 300);
+  }
+  if (!part.name) return null;
+  for (const field of PART_NUMBER_FIELDS) {
+    if (raw[field] !== undefined && raw[field] !== null && raw[field] !== '') {
+      const number = cleanNumber(raw[field]);
+      if (number !== null) part[field] = number;
+    }
+  }
+  for (const field of PART_BOOL_FIELDS) if (typeof raw[field] === 'boolean') part[field] = raw[field];
+  for (const field of PART_ARRAY_FIELDS) {
+    if (Array.isArray(raw[field])) {
+      part[field] = raw[field].filter((item) => typeof item === 'string').map((item) => item.slice(0, 40)).slice(0, 12);
+    }
+  }
+  if (part.itemUrl && !/^https:\/\//i.test(part.itemUrl)) delete part.itemUrl;
+  if (part.imageUrl && !/^https:\/\//i.test(part.imageUrl)) delete part.imageUrl;
+  if (part.currency && !/^[A-Z]{3}$/.test(part.currency)) delete part.currency;
+  return part;
+}
+
+/* ------------------------------------------------------------------ */
+/* eBay                                                               */
+/* ------------------------------------------------------------------ */
 
 function ebayApiRoot() {
   return process.env.EBAY_ENV === 'sandbox' ? 'https://api.sandbox.ebay.com' : 'https://api.ebay.com';
@@ -45,9 +348,7 @@ async function getEbayAccessToken() {
   const clientId = process.env.EBAY_CLIENT_ID;
   const clientSecret = process.env.EBAY_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
-    const error = new Error('La búsqueda de eBay aún no está configurada en el servidor.');
-    error.status = 503;
-    throw error;
+    throw httpError(503, 'La búsqueda de eBay aún no está configurada en el servidor.');
   }
   if (cachedEbayToken && cachedEbayToken.expiresAt > Date.now() + 30_000) return cachedEbayToken.value;
 
@@ -63,9 +364,7 @@ async function getEbayAccessToken() {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.access_token) {
-    const error = new Error('eBay no aceptó las credenciales. Revisa que sean del mismo entorno (Sandbox o Producción).');
-    error.status = 502;
-    throw error;
+    throw httpError(502, 'eBay no aceptó las credenciales. Revisa que sean del mismo entorno (Sandbox o Producción).');
   }
   cachedEbayToken = { value: data.access_token, expiresAt: Date.now() + Math.max(60, data.expires_in - 60) * 1000 };
   return cachedEbayToken.value;
@@ -73,11 +372,7 @@ async function getEbayAccessToken() {
 
 async function searchEbay(url) {
   const category = url.searchParams.get('category') || 'cpu';
-  if (!ALLOWED_CATEGORIES.has(category)) {
-    const error = new Error('La categoría solicitada no es válida.');
-    error.status = 400;
-    throw error;
-  }
+  if (!ALLOWED_CATEGORIES.has(category)) throw httpError(400, 'La categoría solicitada no es válida.');
   const typedQuery = (url.searchParams.get('q') || '').trim().slice(0, 100);
   const platform = (url.searchParams.get('platform') || '').trim();
   let q = typedQuery || DEFAULT_QUERIES[category];
@@ -96,11 +391,9 @@ async function searchEbay(url) {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const error = new Error(data.errors?.[0]?.message || `eBay respondió con estado ${response.status}.`);
-    error.status = 502;
-    throw error;
+    throw httpError(502, data.errors?.[0]?.message || `eBay respondió con estado ${response.status}.`);
   }
-  const items = (data.itemSummaries || []).map(item => ({
+  const items = (data.itemSummaries || []).map((item) => ({
     id: item.itemId,
     title: item.title || 'Producto de eBay',
     image: item.image?.imageUrl || item.thumbnailImages?.[0]?.imageUrl || '',
@@ -112,7 +405,7 @@ async function searchEbay(url) {
     shippingCurrency: item.shippingOptions?.[0]?.shippingCost?.currency || item.price?.currency || 'USD',
     url: item.itemAffiliateWebUrl || item.itemWebUrl || '',
     platform,
-  })).filter(item => Number.isFinite(item.price));
+  })).filter((item) => Number.isFinite(item.price));
 
   return {
     provider: 'eBay', marketplace: process.env.EBAY_MARKETPLACE_ID || 'EBAY_US',
@@ -120,6 +413,198 @@ async function searchEbay(url) {
     fetchedAt: new Date().toISOString(),
   };
 }
+
+/* ------------------------------------------------------------------ */
+/* Rutas de la API                                                    */
+/* ------------------------------------------------------------------ */
+
+async function handleApi(request, response, url) {
+  const method = request.method;
+  const pathname = url.pathname;
+
+  if (pathname === '/api/providers/status') {
+    if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
+    return json(response, 200, {
+      ebay: { configured: Boolean(process.env.EBAY_CLIENT_ID && process.env.EBAY_CLIENT_SECRET) },
+      amazon: { available: false, reason: 'Amazon Creators API requiere cuenta de Afiliados y aprobación expresa para mostrar su contenido en una app móvil y junto a otros comercios.' },
+      accounts: { configured: Boolean(databaseUrl()), provider: 'Neon Postgres' },
+    });
+  }
+
+  if (pathname === '/api/providers/ebay/search') {
+    if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
+    return json(response, 200, await searchEbay(url));
+  }
+
+  if (pathname === '/api/auth/me') {
+    if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 200, { user: null, accounts: { configured: false } });
+    const user = await getSession(request);
+    return json(response, 200, { user: user ? publicUser(user) : null, accounts: { configured: true } });
+  }
+
+  if (pathname === '/api/auth/register') {
+    if (method !== 'POST') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'Las cuentas todavía no están configuradas. Falta DATABASE_URL en el servidor.' });
+    if (!rateLimit(`register:${clientIp(request)}`, 8)) return json(response, 429, { error: 'Demasiados intentos. Espera unos minutos y vuelve a probar.' });
+    if (!String(request.headers['content-type'] || '').toLowerCase().startsWith('application/json')) return json(response, 415, { error: 'Formato de solicitud no admitido.' });
+
+    const body = await readJson(request);
+    const name = cleanText(body.name, 60);
+    const email = cleanText(body.email, 254).toLowerCase();
+    const password = typeof body.password === 'string' ? body.password : '';
+
+    if (name.length < 2) return json(response, 400, { error: 'Escribe tu nombre (al menos 2 caracteres).' });
+    if (!EMAIL_RE.test(email)) return json(response, 400, { error: 'Escribe un correo electrónico válido.' });
+    if (password.length < 8) return json(response, 400, { error: 'La contraseña debe tener al menos 8 caracteres.' });
+    if (password.length > 200) return json(response, 400, { error: 'La contraseña es demasiado larga.' });
+
+    const passwordHash = await hashPassword(password);
+    let row;
+    try {
+      const result = await dbQuery(
+        `INSERT INTO alium_users (email, display_name, password_hash)
+         VALUES ($1, $2, $3)
+         RETURNING id, email, display_name, created_at`,
+        [email, name, passwordHash],
+      );
+      row = result.rows[0];
+    } catch (error) {
+      if (error.code === '23505') return json(response, 409, { error: 'Ya existe una cuenta con ese correo. Inicia sesión.' });
+      throw error;
+    }
+
+    const token = await createSession(row.id);
+    return json(response, 201, { user: publicUser(row) }, { 'Set-Cookie': sessionCookie(request, token) });
+  }
+
+  if (pathname === '/api/auth/login') {
+    if (method !== 'POST') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'Las cuentas todavía no están configuradas. Falta DATABASE_URL en el servidor.' });
+    if (!rateLimit(`login:${clientIp(request)}`, 12)) return json(response, 429, { error: 'Demasiados intentos. Espera unos minutos y vuelve a probar.' });
+    if (!String(request.headers['content-type'] || '').toLowerCase().startsWith('application/json')) return json(response, 415, { error: 'Formato de solicitud no admitido.' });
+
+    const body = await readJson(request);
+    const email = cleanText(body.email, 254).toLowerCase();
+    const password = typeof body.password === 'string' ? body.password : '';
+    if (!EMAIL_RE.test(email) || !password) return json(response, 401, { error: 'Correo o contraseña incorrectos.' });
+
+    const result = await dbQuery('SELECT id, email, display_name, password_hash, created_at FROM alium_users WHERE email = $1', [email]);
+    const row = result.rows[0];
+    if (!row) {
+      await burnPasswordTime(password);
+      return json(response, 401, { error: 'Correo o contraseña incorrectos.' });
+    }
+    if (!(await verifyPassword(password, row.password_hash))) {
+      return json(response, 401, { error: 'Correo o contraseña incorrectos.' });
+    }
+
+    const token = await createSession(row.id);
+    return json(response, 200, { user: publicUser(row) }, { 'Set-Cookie': sessionCookie(request, token) });
+  }
+
+  if (pathname === '/api/auth/logout') {
+    if (method !== 'POST') return json(response, 405, { error: 'Método no permitido.' });
+    const token = parseCookies(request)[SESSION_COOKIE];
+    if (token && databaseUrl()) await dbQuery('DELETE FROM alium_sessions WHERE id = $1', [sessionId(token)]);
+    return json(response, 200, { ok: true }, { 'Set-Cookie': clearSessionCookie(request) });
+  }
+
+  if (pathname === '/api/auth/account') {
+    if (method !== 'DELETE') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'Las cuentas todavía no están configuradas.' });
+    if (!rateLimit(`delete:${clientIp(request)}`, 6)) return json(response, 429, { error: 'Demasiados intentos. Espera unos minutos.' });
+    if (!String(request.headers['content-type'] || '').toLowerCase().startsWith('application/json')) return json(response, 415, { error: 'Formato de solicitud no admitido.' });
+
+    const user = await getSession(request);
+    if (!user) return json(response, 401, { error: 'Tu sesión terminó. Vuelve a iniciar sesión.' });
+    const body = await readJson(request);
+    const password = typeof body.password === 'string' ? body.password : '';
+    const result = await dbQuery('SELECT password_hash FROM alium_users WHERE id = $1', [user.id]);
+    if (!result.rows[0] || !(await verifyPassword(password, result.rows[0].password_hash))) {
+      return json(response, 403, { error: 'La contraseña no es correcta.' });
+    }
+    await dbQuery('DELETE FROM alium_users WHERE id = $1', [user.id]);
+    return json(response, 200, { ok: true }, { 'Set-Cookie': clearSessionCookie(request) });
+  }
+
+  if (pathname === '/api/builds') {
+    if (!databaseUrl()) return json(response, 503, { error: 'Las cuentas todavía no están configuradas. Falta DATABASE_URL en el servidor.' });
+    const user = await getSession(request);
+    if (!user) return json(response, 401, { error: 'Inicia sesión para guardar o ver tus PCs.' });
+
+    if (method === 'GET') {
+      const result = await dbQuery(
+        `SELECT id, name, platform, use_case, tier, currency, budget, total, parts, created_at
+           FROM alium_builds WHERE user_id = $1 ORDER BY created_at DESC LIMIT 100`,
+        [user.id],
+      );
+      const builds = result.rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        platform: row.platform,
+        use: row.use_case,
+        tier: row.tier,
+        currency: row.currency,
+        budget: row.budget === null ? null : Number(row.budget),
+        total: Number(row.total),
+        parts: row.parts,
+        createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+      }));
+      return json(response, 200, { builds });
+    }
+
+    if (method === 'POST') {
+      if (!rateLimit(`save:${user.id}`, 60, 60 * 60 * 1000)) return json(response, 429, { error: 'Has guardado muchas PCs en poco tiempo. Intenta más tarde.' });
+      if (!String(request.headers['content-type'] || '').toLowerCase().startsWith('application/json')) return json(response, 415, { error: 'Formato de solicitud no admitido.' });
+      const body = await readJson(request, 128 * 1024);
+      const name = cleanText(body.name, 80) || 'Mi PC ALIUM';
+      const rawParts = Array.isArray(body.parts) ? body.parts : [];
+      const parts = rawParts.map(sanitizePart).filter(Boolean).slice(0, 20);
+      if (!parts.length) return json(response, 400, { error: 'La PC no tiene piezas para guardar.' });
+      const platform = ['AMD', 'Intel'].includes(body.platform) ? body.platform : null;
+      const use = cleanText(body.use, 40) || null;
+      const tier = cleanText(body.tier, 20) || null;
+      const budget = cleanNumber(body.budget);
+      const total = Math.round(parts.reduce((sum, part) => sum + (Number(part.price) || 0), 0) * 100) / 100;
+
+      const result = await dbQuery(
+        `INSERT INTO alium_builds (user_id, name, platform, use_case, tier, currency, budget, total, parts)
+         VALUES ($1, $2, $3, $4, $5, 'USD', $6, $7, $8::jsonb)
+         RETURNING id, name, platform, use_case, tier, currency, budget, total, parts, created_at`,
+        [user.id, name, platform, use, tier, budget, total, JSON.stringify(parts)],
+      );
+      const row = result.rows[0];
+      return json(response, 201, {
+        build: {
+          id: row.id, name: row.name, platform: row.platform, use: row.use_case, tier: row.tier,
+          currency: row.currency, budget: row.budget === null ? null : Number(row.budget),
+          total: Number(row.total), parts: row.parts,
+          createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+        },
+      });
+    }
+
+    return json(response, 405, { error: 'Método no permitido.' });
+  }
+
+  const buildMatch = pathname.match(/^\/api\/builds\/([0-9a-f-]{36})$/i);
+  if (buildMatch) {
+    if (method !== 'DELETE') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'Las cuentas todavía no están configuradas.' });
+    const user = await getSession(request);
+    if (!user) return json(response, 401, { error: 'Inicia sesión para eliminar una PC.' });
+    const result = await dbQuery('DELETE FROM alium_builds WHERE id = $1 AND user_id = $2 RETURNING id', [buildMatch[1], user.id]);
+    if (!result.rowCount) return json(response, 404, { error: 'No encontramos esa PC en tu cuenta.' });
+    return json(response, 200, { ok: true });
+  }
+
+  return json(response, 404, { error: 'Endpoint API no encontrado.' });
+}
+
+/* ------------------------------------------------------------------ */
+/* Servidor                                                           */
+/* ------------------------------------------------------------------ */
 
 const server = http.createServer(async (request, response) => {
   let url;
@@ -131,18 +616,24 @@ const server = http.createServer(async (request, response) => {
   }
 
   if (url.pathname.startsWith('/api/')) {
-    if (request.method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
-    if (url.pathname === '/api/providers/ebay/search') {
-      try {
-        return json(response, 200, await searchEbay(url));
-      } catch (error) {
-        return json(response, error.status || 502, { error: error.message || 'No se pudo consultar eBay.' });
-      }
+    try {
+      await handleApi(request, response, url);
+    } catch (error) {
+      if (!error.status) console.error('[api]', error);
+      if (!response.headersSent) json(response, error.status || 502, { error: error.message || 'No se pudo completar la solicitud.' });
+      else response.end();
     }
-    return json(response, 404, { error: 'Endpoint API no encontrado.' });
+    return;
   }
 
-  if (url.pathname === '/health') return json(response, 200, { ok: true });
+  if (url.pathname === '/health') {
+    return json(response, 200, { ok: true, accounts: Boolean(databaseUrl()) });
+  }
+
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    response.writeHead(405, { Allow: 'GET, HEAD' }).end('Método no permitido');
+    return;
+  }
 
   let pathname;
   try {
@@ -152,10 +643,11 @@ const server = http.createServer(async (request, response) => {
     return;
   }
   if (pathname === '/') pathname = '/index.html';
-  if (pathname === '/.env' || pathname.toLowerCase().endsWith('/.env')) {
+  if (pathname.split('/').some((segment) => segment.startsWith('.')) || pathname.toLowerCase().includes('node_modules')) {
     response.writeHead(403).end('Prohibido');
     return;
   }
+
   const file = path.resolve(root, `.${pathname}`);
   if (file !== root && !file.startsWith(root + path.sep)) {
     response.writeHead(403).end('Prohibido');
@@ -166,10 +658,14 @@ const server = http.createServer(async (request, response) => {
       response.writeHead(404).end('No encontrado');
       return;
     }
+    const extension = path.extname(file).toLowerCase();
     response.writeHead(200, {
-      'Content-Type': mime[path.extname(file).toLowerCase()] || 'application/octet-stream',
+      'Content-Type': mime[extension] || 'application/octet-stream',
       'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Cache-Control': extension === '.html' ? 'no-cache' : 'public, max-age=3600',
     });
+    if (request.method === 'HEAD') return response.end();
     fs.createReadStream(file).pipe(response);
   });
 });
@@ -178,4 +674,11 @@ const port = Number(process.env.PORT) || 4174;
 const host = process.env.HOST || '127.0.0.1';
 server.listen(port, host, () => {
   console.log('ALIUM local: http://' + (host === '0.0.0.0' ? 'localhost' : host) + ':' + port);
+  if (!databaseUrl()) {
+    console.log('[db] DATABASE_URL no está definido: las cuentas quedan desactivadas hasta configurarlo.');
+    return;
+  }
+  ensureDb()
+    .then(() => console.log('[db] esquema de cuentas listo.'))
+    .catch((error) => console.error('[db] no se pudo preparar el esquema:', error.message));
 });

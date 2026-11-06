@@ -4,6 +4,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 
 const root = path.resolve(__dirname);
+const staticRoot = path.join(root, 'public');
 const mime = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml',
@@ -73,6 +74,13 @@ CREATE TABLE IF NOT EXISTS alium_builds (
 CREATE INDEX IF NOT EXISTS alium_sessions_user_idx ON alium_sessions(user_id);
 CREATE INDEX IF NOT EXISTS alium_sessions_expiry_idx ON alium_sessions(expires_at);
 CREATE INDEX IF NOT EXISTS alium_builds_user_created_idx ON alium_builds(user_id, created_at DESC);
+CREATE TABLE IF NOT EXISTS alium_subscribers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text NOT NULL UNIQUE,
+  source text,
+  notify boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 `;
 
 function databaseUrl() {
@@ -418,6 +426,53 @@ async function searchEbay(url) {
 /* Rutas de la API                                                    */
 /* ------------------------------------------------------------------ */
 
+function emailConfigured() {
+  return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+}
+
+async function sendEmail({ to, subject, html, text }) {
+  if (!emailConfigured()) return { sent: false, reason: 'email_not_configured' };
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [to], subject, html, text }),
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '');
+    throw new Error(`No se pudo enviar el correo (Resend ${response.status}). ${detail.slice(0, 200)}`);
+  }
+  return { sent: true };
+}
+
+function welcomeEmail(name) {
+  const safeName = escapeHtml(name || 'gracias');
+  const site = process.env.PUBLIC_SITE_URL || 'https://alium.netlify.app';
+  const html = `
+    <div style="font-family:Inter,Arial,sans-serif;background:#0b0912;color:#f6f2ff;padding:32px">
+      <h1 style="margin:0 0 12px;font-size:24px">Tu cuenta de ALIUM está lista</h1>
+      <p>Hola ${safeName}, ya puedes guardar tus configuraciones y volver a ellas cuando quieras.</p>
+      <p><a href="${site}/cuenta.html" style="display:inline-block;background:#8a3cf0;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none">Abrir mi cuenta</a></p>
+      <p style="color:#a9a2b8;font-size:13px">Te avisaremos aquí solo cuando haya novedades importantes, ofertas o mantenimiento. Puedes darte de baja respondiendo a este correo.</p>
+    </div>`;
+  return { subject: 'Tu cuenta de ALIUM está lista', html, text: `Hola ${name || ''}, tu cuenta de ALIUM está lista. Entra en ${site}/cuenta.html` };
+}
+
+function adminAuthorized(request) {
+  const expected = process.env.ADMIN_TOKEN || '';
+  if (!expected) return false;
+  const header = String(request.headers.authorization || '');
+  const provided = header.toLowerCase().startsWith('bearer ') ? header.slice(7).trim() : String(request.headers['x-admin-token'] || '');
+  if (!provided || provided.length !== expected.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+}
+
 async function handleApi(request, response, url) {
   const method = request.method;
   const pathname = url.pathname;
@@ -428,12 +483,65 @@ async function handleApi(request, response, url) {
       ebay: { configured: Boolean(process.env.EBAY_CLIENT_ID && process.env.EBAY_CLIENT_SECRET) },
       amazon: { available: false, reason: 'Amazon Creators API requiere cuenta de Afiliados y aprobación expresa para mostrar su contenido en una app móvil y junto a otros comercios.' },
       accounts: { configured: Boolean(databaseUrl()), provider: 'Neon Postgres' },
+      email: { configured: emailConfigured(), provider: 'Resend' },
     });
   }
 
   if (pathname === '/api/providers/ebay/search') {
     if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
     return json(response, 200, await searchEbay(url));
+  }
+
+  if (pathname === '/api/subscribe') {
+    if (method !== 'POST') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'Los avisos todavía no están configurados. Falta DATABASE_URL en el servidor.' });
+    if (!rateLimit(`subscribe:${clientIp(request)}`, 10)) return json(response, 429, { error: 'Demasiados intentos. Espera unos minutos.' });
+    if (!String(request.headers['content-type'] || '').toLowerCase().startsWith('application/json')) return json(response, 415, { error: 'Formato de solicitud no admitido.' });
+    const body = await readJson(request);
+    const email = cleanText(body.email, 254).toLowerCase();
+    const source = cleanText(body.source, 40) || 'web';
+    if (!EMAIL_RE.test(email)) return json(response, 400, { error: 'Escribe un correo electrónico válido.' });
+    await dbQuery(
+      `INSERT INTO alium_subscribers (email, source) VALUES ($1, $2)
+       ON CONFLICT (email) DO UPDATE SET notify = true, source = COALESCE(alium_subscribers.source, EXCLUDED.source)`,
+      [email, source],
+    );
+    return json(response, 201, { ok: true, message: 'Te avisaremos de novedades, ofertas y mantenimiento.' });
+  }
+
+  if (pathname === '/api/admin/subscribers') {
+    if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
+    if (!adminAuthorized(request)) return json(response, 401, { error: 'No autorizado.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'Falta DATABASE_URL.' });
+    const result = await dbQuery('SELECT email, source, created_at FROM alium_subscribers WHERE notify = true ORDER BY created_at DESC LIMIT 5000');
+    return json(response, 200, {
+      count: result.rows.length,
+      emails: result.rows.map((row) => ({ email: row.email, source: row.source, createdAt: row.created_at })),
+    });
+  }
+
+  if (pathname === '/api/admin/notify') {
+    if (method !== 'POST') return json(response, 405, { error: 'Método no permitido.' });
+    if (!adminAuthorized(request)) return json(response, 401, { error: 'No autorizado.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'Falta DATABASE_URL.' });
+    if (!emailConfigured()) return json(response, 501, { error: 'Configura RESEND_API_KEY y EMAIL_FROM para enviar avisos por correo.' });
+    const body = await readJson(request);
+    const subject = cleanText(body.subject, 120);
+    const message = cleanText(body.message, 4000);
+    if (!subject || !message) return json(response, 400, { error: 'Escribe el asunto y el mensaje.' });
+    const result = await dbQuery('SELECT email FROM alium_subscribers WHERE notify = true LIMIT 500');
+    const html = `<div style="font-family:Inter,Arial,sans-serif;color:#201b2b;line-height:1.6"><h2>${escapeHtml(subject)}</h2><p>${escapeHtml(message).replace(/\n/g, '<br>')}</p><p style="color:#777183;font-size:12px">Recibes este aviso porque te suscribiste en ALIUM.</p></div>`;
+    let sent = 0;
+    const failed = [];
+    for (const row of result.rows) {
+      try {
+        await sendEmail({ to: row.email, subject, html, text: message });
+        sent += 1;
+      } catch (error) {
+        failed.push({ email: row.email, error: error.message });
+      }
+    }
+    return json(response, 200, { sent, failed: failed.length, errors: failed.slice(0, 5) });
   }
 
   if (pathname === '/api/auth/me') {
@@ -475,6 +583,14 @@ async function handleApi(request, response, url) {
     }
 
     const token = await createSession(row.id);
+    if (body.newsletter !== false) {
+      try {
+        await dbQuery('INSERT INTO alium_subscribers (email, source) VALUES ($1, $2) ON CONFLICT (email) DO NOTHING', [email, 'registro']);
+        if (emailConfigured()) await sendEmail({ to: email, ...welcomeEmail(name) });
+      } catch (error) {
+        console.error('[email] no se pudo registrar el aviso de bienvenida:', error.message);
+      }
+    }
     return json(response, 201, { user: publicUser(row) }, { 'Set-Cookie': sessionCookie(request, token) });
   }
 
@@ -525,6 +641,7 @@ async function handleApi(request, response, url) {
       return json(response, 403, { error: 'La contraseña no es correcta.' });
     }
     await dbQuery('DELETE FROM alium_users WHERE id = $1', [user.id]);
+    await dbQuery('DELETE FROM alium_subscribers WHERE email = $1', [user.email]).catch(() => {});
     return json(response, 200, { ok: true }, { 'Set-Cookie': clearSessionCookie(request) });
   }
 
@@ -648,8 +765,8 @@ const server = http.createServer(async (request, response) => {
     return;
   }
 
-  const file = path.resolve(root, `.${pathname}`);
-  if (file !== root && !file.startsWith(root + path.sep)) {
+  const file = path.resolve(staticRoot, `.${pathname}`);
+  if (file !== staticRoot && !file.startsWith(staticRoot + path.sep)) {
     response.writeHead(403).end('Prohibido');
     return;
   }
@@ -670,15 +787,19 @@ const server = http.createServer(async (request, response) => {
   });
 });
 
-const port = Number(process.env.PORT) || 4174;
-const host = process.env.HOST || '127.0.0.1';
-server.listen(port, host, () => {
-  console.log('ALIUM local: http://' + (host === '0.0.0.0' ? 'localhost' : host) + ':' + port);
-  if (!databaseUrl()) {
-    console.log('[db] DATABASE_URL no está definido: las cuentas quedan desactivadas hasta configurarlo.');
-    return;
-  }
-  ensureDb()
-    .then(() => console.log('[db] esquema de cuentas listo.'))
-    .catch((error) => console.error('[db] no se pudo preparar el esquema:', error.message));
-});
+module.exports = { server, handleApi };
+
+if (require.main === module) {
+  const port = Number(process.env.PORT) || 4174;
+  const host = process.env.HOST || '127.0.0.1';
+  server.listen(port, host, () => {
+    console.log('ALIUM local: http://' + (host === '0.0.0.0' ? 'localhost' : host) + ':' + port);
+    if (!databaseUrl()) {
+      console.log('[db] DATABASE_URL no está definido: las cuentas quedan desactivadas hasta configurarlo.');
+      return;
+    }
+    ensureDb()
+      .then(() => console.log('[db] esquema de cuentas listo.'))
+      .catch((error) => console.error('[db] no se pudo preparar el esquema:', error.message));
+  });
+}

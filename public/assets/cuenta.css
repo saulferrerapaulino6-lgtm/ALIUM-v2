@@ -169,3 +169,10 @@ form input:focus, .modal-card input:focus { border-color: var(--purple); box-sha
   .modal-card { padding: 26px 20px; }
   .modal-actions .button { flex: 1 1 auto; }
 }
+
+/* Control de tema tipo interruptor */
+button#theme-toggle.theme-toggle{position:relative;width:76px;min-width:76px;height:34px;display:inline-flex;align-items:center;justify-content:space-between;padding:0 9px;border:1px solid var(--line);border-radius:999px;background:var(--panel-2);color:var(--muted);font-size:.72rem;line-height:1;cursor:pointer;box-shadow:inset 0 1px 3px #0004}
+button#theme-toggle.theme-toggle span[aria-hidden]{position:relative;z-index:2;transition:color .18s}
+button#theme-toggle.theme-toggle[aria-checked="false"] span:first-child,button#theme-toggle.theme-toggle[aria-checked="true"] span:nth-child(2){color:var(--ink)}
+.theme-knob{position:absolute;z-index:1;left:3px;top:3px;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#ed347d,#8a3cf0);box-shadow:0 3px 10px #0006;transition:transform .22s cubic-bezier(.4,1.4,.6,1)}
+button#theme-toggle.theme-toggle[aria-checked="true"] .theme-knob{transform:translateX(42px)}

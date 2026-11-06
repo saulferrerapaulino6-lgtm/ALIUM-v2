@@ -24,3 +24,24 @@ html{scroll-behavior:smooth}body{background:radial-gradient(ellipse at 54% 100%,
   .catalog-sidebar .selected-mini span{grid-column:1;line-height:1.45}
   .catalog-sidebar .selected-mini button{grid-column:2;grid-row:1/3;align-self:center;padding:7px 9px;border:1px solid #624278;border-radius:6px;white-space:nowrap}
 }
+
+/* Logos reales de fabricante y control de tema renovado */
+.choice[data-group="cpu"]{grid-template-columns:104px 1fr;column-gap:16px}
+.choice[data-group="cpu"]:before{display:none}
+.choice[data-group="cpu"] .cpu-logo{width:96px;height:64px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;object-fit:contain}
+.choice[data-group="cpu"] .amd-logo{filter:brightness(0) invert(1)}
+:root[data-theme="light"] .choice[data-group="cpu"] .amd-logo{filter:none}
+:root[data-theme="light"] .choice[data-group="cpu"] .cpu-logo{background:transparent;border:0}
+button#theme-toggle.theme-toggle{position:relative;width:76px!important;height:34px!important;min-width:76px;display:inline-flex!important;align-items:center;justify-content:space-between;padding:0 9px!important;border:1px solid #3d3948!important;border-radius:999px!important;background:#17151e!important;color:#8c8499!important;font-size:.72rem!important;line-height:1;cursor:pointer;box-shadow:inset 0 1px 3px #0006}
+button#theme-toggle.theme-toggle span[aria-hidden]{position:relative;z-index:2;transition:color .18s,opacity .18s}
+button#theme-toggle.theme-toggle[aria-checked="false"] span:first-child,button#theme-toggle.theme-toggle[aria-checked="true"] span:nth-child(2){color:#f8f4ff}
+.theme-knob{position:absolute;z-index:1;left:3px;top:3px;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#ed347d,#8a3cf0);box-shadow:0 3px 10px #0007;transition:transform .22s cubic-bezier(.4,1.4,.6,1)}
+button#theme-toggle.theme-toggle[aria-checked="true"] .theme-knob{transform:translateX(42px)}
+:root[data-theme="light"] button#theme-toggle.theme-toggle{background:#fff!important;border-color:#e2dbe9!important;color:#8c8499!important;box-shadow:inset 0 1px 3px #0000000f}
+:root[data-theme="light"] button#theme-toggle.theme-toggle[aria-checked="false"] span:first-child,button#theme-toggle.theme-toggle[aria-checked="true"] span:nth-child(2){color:#5525a7}
+.budget-helper{margin:8px 0 0;color:#9c95a8;font-size:.78rem}
+:root[data-theme="light"] .budget-helper{color:#625b6c}
+.money{background:#17151e;border-color:#3d3948}
+.money input{font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.product-photo{width:42px;height:42px;flex:none;object-fit:contain;border:1px solid #393243;border-radius:9px;background:#fff}
+@media(max-width:760px){.choice[data-group="cpu"]{grid-template-columns:82px 1fr;column-gap:12px}.choice[data-group="cpu"] .cpu-logo{width:76px;height:52px}button#theme-toggle.theme-toggle{width:70px!important;min-width:70px;height:32px!important}button#theme-toggle.theme-toggle[aria-checked="true"] .theme-knob{transform:translateX(36px)}}

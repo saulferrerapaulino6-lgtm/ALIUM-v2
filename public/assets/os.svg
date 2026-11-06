@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" role="img" aria-label="Sistema operativo">
+  <defs>
+    <linearGradient id="o1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ed347d"/><stop offset="1" stop-color="#8a3cf0"/></linearGradient>
+  </defs>
+  <rect x="46" y="32" width="148" height="116" rx="12" fill="#16131d" stroke="#574a69" stroke-width="3"/>
+  <path d="M46 58h148" stroke="#3d3549" stroke-width="2"/>
+  <g fill="#8a3cf0"><circle cx="62" cy="45" r="4" fill="#ed347d"/><circle cx="76" cy="45" r="4" fill="#c084fc"/><circle cx="90" cy="45" r="4" fill="#6b5c7e"/></g>
+  <g fill="none" stroke="url(#o1)" stroke-width="7" stroke-linecap="round">
+    <rect x="78" y="80" width="38" height="38" rx="6"/>
+    <rect x="126" y="80" width="38" height="38" rx="6"/>
+  </g>
+  <rect x="78" y="80" width="38" height="10" rx="5" fill="url(#o1)"/>
+</svg>

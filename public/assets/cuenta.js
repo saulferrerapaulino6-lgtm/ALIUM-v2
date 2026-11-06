@@ -28,8 +28,8 @@ function applyTheme(theme) {
   safeSet('alium_theme', theme);
   const button = $('theme-toggle');
   if (button) {
-    button.textContent = theme === 'dark' ? '☼' : '☾';
-    const label = theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro';
+    button.setAttribute('aria-checked', String(theme === 'dark'));
+    const label = theme === 'dark' ? 'Tema oscuro activo. Cambiar a claro' : 'Tema claro activo. Cambiar a oscuro';
     button.title = label;
     button.setAttribute('aria-label', label);
   }

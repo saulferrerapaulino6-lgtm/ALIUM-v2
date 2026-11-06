@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 200" role="img" aria-label="Case para PC">
+  <defs>
+    <linearGradient id="k1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#332c40"/><stop offset="1" stop-color="#141018"/></linearGradient>
+    <linearGradient id="k2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ed347d"/><stop offset="1" stop-color="#8a3cf0"/></linearGradient>
+  </defs>
+  <rect x="24" y="8" width="112" height="184" rx="12" fill="url(#k1)" stroke="#5d4d72" stroke-width="2"/>
+  <rect x="34" y="18" width="92" height="164" rx="7" fill="#0c0a11" stroke="#3d3349" stroke-width="1.5"/>
+  <circle cx="80" cy="60" r="24" fill="none" stroke="#574271" stroke-width="2"/>
+  <circle cx="80" cy="60" r="18" fill="none" stroke="#8a3cf0" stroke-width="2" opacity=".65"/>
+  <circle cx="80" cy="60" r="5" fill="url(#k2)"/>
+  <circle cx="80" cy="124" r="24" fill="none" stroke="#574271" stroke-width="2"/>
+  <circle cx="80" cy="124" r="18" fill="none" stroke="#ed347d" stroke-width="2" opacity=".65"/>
+  <circle cx="80" cy="124" r="5" fill="url(#k2)"/>
+  <rect x="34" y="18" width="3" height="164" fill="url(#k2)" opacity=".8"/>
+  <circle cx="132" cy="22" r="2.4" fill="#ed347d"/>
+  <rect x="52" y="164" width="56" height="10" rx="5" fill="#221c2c" stroke="#463857"/>
+</svg>

@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#090910">
 <meta name="description" content="Crea tu cuenta de ALIUM y guarda el historial de las PCs que armas.">
 <title>ALIUM — Mi cuenta</title>
-<link rel="stylesheet" href="assets/cuenta.css">
+<link rel="stylesheet" href="assets/cuenta.css?v=6">
 </head>
 <body>
 <header class="topbar">
@@ -14,7 +14,7 @@
     <a class="brand" href="index.html" aria-label="ALIUM, inicio"><img class="brand-logo" src="assets/alium-as.png" alt=""><span>ALIUM</span></a>
     <div class="tools">
       <a href="configurador.html">Configurador</a>
-      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Cambiar tema" title="Cambiar tema">☼</button>
+      <button class="theme-toggle" id="theme-toggle" type="button" role="switch" aria-checked="true" aria-label="Cambiar tema" title="Cambiar tema"><span aria-hidden="true">☀</span><span aria-hidden="true">☾</span><span class="theme-knob" aria-hidden="true"></span></button>
     </div>
   </div>
 </header>
@@ -125,6 +125,6 @@
 </dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="assets/cuenta.js" defer></script>
+<script src="assets/cuenta.js?v=6" defer></script>
 </body>
 </html>

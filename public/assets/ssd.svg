@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" role="img" aria-label="Unidad SSD">
+  <defs>
+    <linearGradient id="s1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#35303f"/><stop offset="1" stop-color="#16131d"/></linearGradient>
+    <linearGradient id="s2" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#ed347d"/><stop offset="1" stop-color="#8a3cf0"/></linearGradient>
+  </defs>
+  <g transform="rotate(-12 120 90)">
+    <rect x="28" y="70" width="184" height="44" rx="8" fill="url(#s1)" stroke="#5b4b70" stroke-width="2"/>
+    <rect x="40" y="78" width="112" height="28" rx="4" fill="#0d0b12" stroke="#493658" stroke-width="2"/>
+    <g fill="#a45df0">
+      <rect x="48" y="85" width="24" height="14" rx="2"/><rect x="78" y="85" width="24" height="14" rx="2"/><rect x="108" y="85" width="24" height="14" rx="2"/>
+    </g>
+    <rect x="164" y="78" width="34" height="28" rx="4" fill="url(#s2)"/>
+    <path d="M28 70h14v44H28z" fill="#0f0d15"/>
+    <g stroke="#caa6f5" stroke-width="2" stroke-linecap="round">
+      <path d="M46 70v-8M56 70v-8M66 70v-8M76 70v-8M86 70v-8M96 70v-8M106 70v-8M116 70v-8M126 70v-8M136 70v-8M146 70v-8"/>
+      <path d="M46 114v8M56 114v8M66 114v8M76 114v8M86 114v8M96 114v8M106 114v8M116 114v8M126 114v8M136 114v8M146 114v8"/>
+    </g>
+  </g>
+</svg>

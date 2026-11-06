@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" role="img" aria-label="Procesador">
+  <defs>
+    <linearGradient id="c1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3a2c4d"/><stop offset="1" stop-color="#17131f"/></linearGradient>
+    <linearGradient id="c2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ed347d"/><stop offset="1" stop-color="#8a3cf0"/></linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#c2)" stroke-width="3" stroke-linecap="round">
+    <path d="M72 26v14M92 26v14M112 26v14M132 26v14M152 26v14M172 26v14"/>
+    <path d="M72 140v14M92 140v14M112 140v14M132 140v14M152 140v14M172 140v14"/>
+    <path d="M50 48h14M50 68h14M50 88h14M50 108h14M50 128h14"/>
+    <path d="M176 48h14M176 68h14M176 88h14M176 108h14M176 128h14"/>
+  </g>
+  <rect x="64" y="40" width="112" height="100" rx="10" fill="url(#c1)" stroke="#6a4a86" stroke-width="3"/>
+  <rect x="82" y="58" width="76" height="64" rx="6" fill="#0e0b14" stroke="url(#c2)" stroke-width="2"/>
+  <g fill="#b06cf0" opacity=".55">
+    <rect x="92" y="68" width="56" height="5" rx="2.5"/><rect x="92" y="80" width="42" height="5" rx="2.5"/><rect x="92" y="92" width="56" height="5" rx="2.5"/><rect x="92" y="104" width="33" height="5" rx="2.5"/>
+  </g>
+  <circle cx="70" cy="46" r="3" fill="#ed347d"/>
+</svg>

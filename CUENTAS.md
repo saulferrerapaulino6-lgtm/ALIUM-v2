@@ -1,23 +1,17 @@
-# Cuentas e historial de PCs (gratis)
+# Cuentas, historial y avisos por correo
 
-ALIUM guarda las cuentas y las PCs en **Neon**, un PostgreSQL gratuito que no borra los datos por inactividad. Render sigue sirviendo la web; Neon solo guarda usuarios, sesiones y configuraciones.
+ALIUM guarda las cuentas y las PCs en **Neon Postgres**. Netlify sirve la web y ejecuta la API; Neon solo guarda usuarios, sesiones, configuraciones y la lista de personas que aceptaron recibir avisos.
 
-## Por qué Neon y no la base de datos de Render
+## Por qué Neon
 
-La base de datos gratuita de Render **caduca a los 30 días** y después se elimina con todos sus datos. Neon Free ofrece 1 GB por proyecto, hasta 20 GB por cuenta y 100 horas de cómputo al mes; el cómputo se suspende al quedar inactivo y **se reactiva solo** en la siguiente consulta. Para un historial que debe durar, Neon es la opción gratuita más conveniente.
+La base de datos gratuita de Render caduca a los 30 días y borra sus datos. Neon Free no caduca, ofrece 1 GB por proyecto y 100 horas de cómputo al mes; el cómputo se suspende al quedar inactivo y **se reactiva solo** en la siguiente consulta. El historial de las PCs sigue disponible al volver a iniciar sesión.
 
-## Configuración (una sola vez)
+## Configuración (ya aplicada en producción)
 
-1. Entra a <https://neon.tech> y crea una cuenta gratuita (puedes usar GitHub).
-2. Crea un proyecto, por ejemplo `alium`, en la región más cercana.
-3. En **Connect** / **Connection string**, copia la cadena que empieza por `postgresql://`.
-4. En Render, abre el servicio `alium-pc-builder` → **Environment** → **Add Environment Variable**:
-   - Key: `DATABASE_URL`
-   - Value: la cadena copiada
-5. Guarda. Render reinicia el servicio.
-6. El servidor crea solo las tablas necesarias al arrancar. Comprueba `/health`: debe devolver `"accounts": true`.
-
-La cadena de conexión es un secreto: no se sube a GitHub ni se pega en el chat. `.env` está excluido por `.gitignore`.
+1. Proyecto de Neon: `alium` (ID `snowy-river-04035024`), rama `production`, base `neondb`, región AWS `us-east-2`.
+2. La cadena de conexión agrupada se guarda como `DATABASE_URL` en Netlify, marcada como secreta.
+3. El servidor crea las tablas al arrancar. `/health` devuelve `"accounts": true` cuando la base responde.
+4. La cadena de conexión es un secreto: no se sube a GitHub, no se pega en el chat y `.env` está excluido por `.gitignore`.
 
 ## Qué se guarda
 
@@ -26,6 +20,16 @@ La cadena de conexión es un secreto: no se sube a GitHub ni se pega en el chat.
 | `alium_users` | nombre, correo (único), hash scrypt de la contraseña y fecha de alta |
 | `alium_sessions` | sesiones con vencimiento de 30 días; se guarda el hash del token, no el token |
 | `alium_builds` | nombre de la PC, plataforma, uso, gama, presupuesto, total y piezas en JSON |
+| `alium_subscribers` | correo, origen, preferencia de avisos y fechas de alta/baja |
+
+## Avisos por correo
+
+- Al registrarse con la casilla de avisos marcada, la persona queda en `alium_subscribers` y recibe un correo de bienvenida si Resend está configurado.
+- Los avisos de mantenimiento, incidencias u ofertas se envían desde el panel protegido por `ADMIN_TOKEN`:
+  - `GET /api/admin/subscribers` lista las personas suscritas.
+  - `POST /api/admin/notify` envía un correo a todas las suscripciones activas.
+- El envío usa **Resend** (`RESEND_API_KEY` y `EMAIL_FROM`). Sin esas variables, las cuentas y el historial siguen funcionando, pero el estado de correo aparece como no configurado.
+- Cada correo incluye un enlace para darse de baja (`/api/unsubscribe?token=...`).
 
 ## Seguridad implementada
 
@@ -40,10 +44,9 @@ La cadena de conexión es un secreto: no se sube a GitHub ni se pega en el chat.
 ## Pendiente antes de abrir al público
 
 - Verificación de correo y recuperación de contraseña.
-- Correos transaccionales (por ejemplo, Resend o Brevo en plan gratuito).
 - Política de privacidad revisada legalmente y términos de servicio.
 - Copias de seguridad. Neon Free no incluye restauración a un punto en el pasado; se puede exportar con `pg_dump`.
-- Si ALIUM crece, revisar los límites de Neon y Render antes de pasar a un plan de pago.
+- Revisar los límites de Neon y Netlify si ALIUM crece.
 
 ## Probar en local
 

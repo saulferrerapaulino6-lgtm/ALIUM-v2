@@ -1,0 +1,21 @@
+{
+  "updated": "2026-11-07",
+  "notices": [
+    {
+      "id": "historial-2026-11",
+      "kind": "novedad",
+      "title": "Tu historial ya vive en tu cuenta",
+      "message": "Crea tu cuenta gratis y guarda cada configuración para retomarla cuando quieras.",
+      "link": "cuenta.html",
+      "linkLabel": "Abrir mi cuenta"
+    },
+    {
+      "id": "avisos-2026-11",
+      "kind": "avisos",
+      "title": "Ofertas y mantenimiento, sin spam",
+      "message": "Suscríbete y te avisaremos solo cuando haya ofertas, novedades o mantenimiento programado.",
+      "link": "index.html#suscribirme",
+      "linkLabel": "Recibir avisos"
+    }
+  ]
+}

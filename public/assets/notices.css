@@ -1,0 +1,122 @@
+/* Avisos del sitio y formulario de suscripción. Se cargan en todas las páginas. */
+.alium-notice {
+  position: relative;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px clamp(16px, 4vw, 48px);
+  border-bottom: 1px solid #ffffff1f;
+  background: linear-gradient(100deg, #23102f, #12101a 68%);
+  color: #f4eff9;
+  font: 500 0.82rem/1.5 Manrope, "Segoe UI", sans-serif;
+}
+.alium-notice[data-kind="avisos"] { background: linear-gradient(100deg, #102530, #10131a 68%); }
+.alium-notice-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e24ba8;
+  box-shadow: 0 0 12px #ed347d;
+}
+.alium-notice[data-kind="avisos"] .alium-notice-dot { background: #49c2e2; box-shadow: 0 0 12px #49c2e2; }
+.alium-notice p { flex: 1; min-width: 0; margin: 0; }
+.alium-notice p b { margin-right: 6px; color: #fff; }
+.alium-notice p span { color: #c9c2d4; }
+.alium-notice > a {
+  flex: 0 0 auto;
+  padding: 7px 13px;
+  border: 1px solid #ffffff35;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.16s, border-color 0.16s;
+}
+.alium-notice > a:hover { background: #ffffff14; border-color: #d48cff; }
+.alium-notice-close {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #b9b3c4;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.alium-notice-close:hover { background: #ffffff12; color: #fff; }
+.alium-notice-close:focus-visible,
+.alium-notice > a:focus-visible { outline: 2px solid #e9c8ff; outline-offset: 2px; }
+@media (max-width: 640px) {
+  .alium-notice { flex-wrap: wrap; gap: 8px 10px; padding: 11px 16px; }
+  .alium-notice p { flex-basis: calc(100% - 44px); font-size: 0.78rem; }
+  .alium-notice > a { margin-left: 18px; }
+}
+
+/* Franja de suscripción de la portada. */
+.subscribe-strip {
+  width: var(--page);
+  margin: 0 auto 64px;
+  padding: clamp(22px, 4vw, 44px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 460px);
+  align-items: center;
+  gap: clamp(18px, 3vw, 42px);
+  border: 1px solid #ffffff1c;
+  background: radial-gradient(ellipse at 8% 0%, #4a1d6b3d, transparent 60%), linear-gradient(110deg, #17111f, #0d0c12 70%);
+}
+.subscribe-strip h2 {
+  margin: 0;
+  font-family: "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+  font-size: clamp(2rem, 3.6vw, 3.4rem);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.subscribe-strip h2 em {
+  font-style: normal;
+  background: linear-gradient(100deg, #f34480, #9945f1);
+  background-clip: text;
+  color: transparent;
+}
+.subscribe-strip p { max-width: 520px; margin: 10px 0 0; color: #a9a3b4; font-size: 0.82rem; line-height: 1.7; }
+.subscribe-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; }
+.subscribe-form input {
+  min-height: 48px;
+  padding: 0 15px;
+  border: 1px solid #ffffff2b;
+  border-radius: 7px;
+  background: #0b0a10;
+  color: #f6f2ff;
+  font: 500 0.86rem Manrope, "Segoe UI", sans-serif;
+}
+.subscribe-form input::placeholder { color: #7f798b; }
+.subscribe-form input:focus-visible { outline: 2px solid #b96cf0; outline-offset: 1px; }
+.subscribe-form button {
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid #ffffff30;
+  border-radius: 7px;
+  background: linear-gradient(105deg, #ed347d, #8e39ed);
+  color: #fff;
+  font: 800 0.82rem Manrope, "Segoe UI", sans-serif;
+  cursor: pointer;
+  transition: transform 0.16s, box-shadow 0.16s;
+}
+.subscribe-form button:hover { transform: translateY(-1px); box-shadow: 0 8px 22px #9b32e74d; }
+.subscribe-form button:disabled { opacity: 0.65; cursor: wait; transform: none; box-shadow: none; }
+.subscribe-status { grid-column: 1 / -1; min-height: 1.1em; margin: 0; color: #b7dfc3; font-size: 0.74rem; }
+.subscribe-status.error { color: #ff9db8; }
+@media (max-width: 760px) {
+  .subscribe-strip { grid-template-columns: 1fr; margin-bottom: 42px; }
+  .subscribe-form { grid-template-columns: 1fr; }
+}

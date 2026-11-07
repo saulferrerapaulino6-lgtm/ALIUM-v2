@@ -453,7 +453,7 @@ async function sendEmail({ to, subject, html, text }) {
 
 function welcomeEmail(name) {
   const safeName = escapeHtml(name || 'gracias');
-  const site = process.env.PUBLIC_SITE_URL || 'https://alium.netlify.app';
+  const site = process.env.PUBLIC_SITE_URL || 'https://alium-pc-builder.netlify.app';
   const html = `
     <div style="font-family:Inter,Arial,sans-serif;background:#0b0912;color:#f6f2ff;padding:32px">
       <h1 style="margin:0 0 12px;font-size:24px">Tu cuenta de ALIUM está lista</h1>

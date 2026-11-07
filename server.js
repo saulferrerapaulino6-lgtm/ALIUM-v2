@@ -34,6 +34,8 @@ const DEFAULT_QUERIES = {
 const ALLOWED_CATEGORIES = new Set(Object.keys(DEFAULT_QUERIES));
 const SESSION_DAYS = 30;
 const SESSION_COOKIE = 'alium_session';
+const ADMIN_COOKIE = 'alium_admin';
+const ADMIN_DAYS = 30;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 let cachedEbayToken = null;
 
@@ -81,6 +83,17 @@ CREATE TABLE IF NOT EXISTS alium_subscribers (
   notify boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+CREATE TABLE IF NOT EXISTS alium_settings (
+  key text PRIMARY KEY,
+  value text NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS alium_admin_sessions (
+  id text PRIMARY KEY,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  expires_at timestamptz NOT NULL
+);
+CREATE INDEX IF NOT EXISTS alium_admin_sessions_expiry_idx ON alium_admin_sessions(expires_at);
 `;
 
 function databaseUrl() {
@@ -464,13 +477,69 @@ function welcomeEmail(name) {
   return { subject: 'Tu cuenta de ALIUM está lista', html, text: `Hola ${name || ''}, tu cuenta de ALIUM está lista. Entra en ${site}/cuenta.html` };
 }
 
-function adminAuthorized(request) {
-  const expected = process.env.ADMIN_TOKEN || '';
-  if (!expected) return false;
-  const header = String(request.headers.authorization || '');
-  const provided = header.toLowerCase().startsWith('bearer ') ? header.slice(7).trim() : String(request.headers['x-admin-token'] || '');
-  if (!provided || provided.length !== expected.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+/* ------------------------------------------------------------------ */
+/* Acceso al panel de administración                                    */
+/* ------------------------------------------------------------------ */
+
+function hashAdminKey(key) {
+  return crypto.createHash('sha256').update(String(key)).digest('hex');
+}
+
+async function getSetting(key) {
+  const result = await dbQuery('SELECT value FROM alium_settings WHERE key = $1', [key]);
+  return result.rows[0] ? String(result.rows[0].value) : null;
+}
+
+async function setSetting(key, value) {
+  await dbQuery(
+    `INSERT INTO alium_settings (key, value, updated_at) VALUES ($1, $2, now())
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+    [key, String(value)],
+  );
+}
+
+async function adminKeyValid(provided) {
+  const key = String(provided || '').trim();
+  if (!key) return false;
+  const stored = await getSetting('admin_key_hash');
+  if (!stored) return false;
+  const actual = Buffer.from(hashAdminKey(key));
+  const expected = Buffer.from(stored);
+  return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+}
+
+function adminCookie(request, token, maxAge = ADMIN_DAYS * 24 * 60 * 60) {
+  return `${ADMIN_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${isSecureRequest(request) ? '; Secure' : ''}`;
+}
+
+function clearAdminCookie(request) {
+  return `${ADMIN_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${isSecureRequest(request) ? '; Secure' : ''}`;
+}
+
+async function createAdminSession() {
+  const token = newSessionToken();
+  const expiresAt = new Date(Date.now() + ADMIN_DAYS * 24 * 60 * 60 * 1000);
+  await dbQuery('INSERT INTO alium_admin_sessions (id, expires_at) VALUES ($1, $2)', [sessionId(token), expiresAt]);
+  await dbQuery('DELETE FROM alium_admin_sessions WHERE expires_at < now()').catch(() => {});
+  return token;
+}
+
+async function getAdminSession(request) {
+  const token = parseCookies(request)[ADMIN_COOKIE];
+  if (!token) return null;
+  const result = await dbQuery('SELECT id FROM alium_admin_sessions WHERE id = $1 AND expires_at > now()', [sessionId(token)]);
+  return result.rows[0] || null;
+}
+
+async function adminAuthorizedRequest(request) {
+  if (!databaseUrl()) return false;
+  if (await getAdminSession(request)) return true;
+  return adminKeyValid(request.headers['x-admin-key']);
+}
+
+async function revokeAdminSession(request) {
+  const token = parseCookies(request)[ADMIN_COOKIE];
+  if (token && databaseUrl()) await dbQuery('DELETE FROM alium_admin_sessions WHERE id = $1', [sessionId(token)]);
 }
 
 async function handleApi(request, response, url) {
@@ -530,9 +599,91 @@ async function handleApi(request, response, url) {
     return json(response, 201, { ok: true, message: 'Te avisaremos de novedades, ofertas y mantenimiento.' });
   }
 
+  if (pathname === '/api/admin/login') {
+    if (method !== 'POST') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'El panel todavía no está configurado. Falta DATABASE_URL en el servidor.' });
+    if (!rateLimit(`admin-login:${clientIp(request)}`, 10)) return json(response, 429, { error: 'Demasiados intentos. Espera unos minutos.' });
+    if (!String(request.headers['content-type'] || '').toLowerCase().startsWith('application/json')) return json(response, 415, { error: 'Formato de solicitud no admitido.' });
+    const body = await readJson(request);
+    const key = typeof body.key === 'string' ? body.key.trim() : '';
+    if (!key) return json(response, 400, { error: 'Escribe la clave de administrador.' });
+    if (!(await adminKeyValid(key))) return json(response, 401, { error: 'Clave incorrecta.' });
+    const token = await createAdminSession();
+    return json(response, 200, { ok: true }, { 'Set-Cookie': adminCookie(request, token) });
+  }
+
+  if (pathname === '/api/admin/logout') {
+    if (method !== 'POST') return json(response, 405, { error: 'Método no permitido.' });
+    await revokeAdminSession(request).catch(() => {});
+    return json(response, 200, { ok: true }, { 'Set-Cookie': clearAdminCookie(request) });
+  }
+
+  if (pathname === '/api/admin/session') {
+    if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
+    const authenticated = await adminAuthorizedRequest(request);
+    return json(response, 200, { ok: true, authenticated });
+  }
+
+  if (pathname === '/api/admin/overview') {
+    if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'Falta DATABASE_URL.' });
+    if (!(await adminAuthorizedRequest(request))) return json(response, 401, { error: 'No autorizado.' });
+
+    const limit = Math.min(500, Math.max(1, Number(url.searchParams.get('limit')) || 200));
+    const [users, subscribers, counts] = await Promise.all([
+      dbQuery(
+        `SELECT u.id, u.display_name, u.email, u.created_at,
+                (SELECT count(*)::int FROM alium_builds b WHERE b.user_id = u.id) AS builds
+           FROM alium_users u
+          ORDER BY u.created_at DESC
+          LIMIT $1`,
+        [limit],
+      ),
+      dbQuery(
+        `SELECT email, source, created_at FROM alium_subscribers
+          WHERE notify = true ORDER BY created_at DESC LIMIT $1`,
+        [Math.min(limit, 100)],
+      ),
+      dbQuery(
+        `SELECT
+           (SELECT count(*)::int FROM alium_users) AS users,
+           (SELECT count(*)::int FROM alium_subscribers WHERE notify = true) AS subscribers,
+           (SELECT count(*)::int FROM alium_builds) AS builds,
+           (SELECT count(*)::int FROM alium_users WHERE created_at > now() - interval '7 days') AS recent,
+           (SELECT max(created_at) FROM alium_users) AS last_registration`,
+      ),
+    ]);
+
+    const row = counts.rows[0] || {};
+    const toIso = (value) => (value ? new Date(value).toISOString() : null);
+    return json(response, 200, {
+      ok: true,
+      checkedAt: new Date().toISOString(),
+      totals: {
+        users: Number(row.users) || 0,
+        subscribers: Number(row.subscribers) || 0,
+        builds: Number(row.builds) || 0,
+        recentUsers: Number(row.recent) || 0,
+        lastRegistrationAt: toIso(row.last_registration),
+      },
+      users: users.rows.map((item) => ({
+        id: item.id,
+        name: item.display_name,
+        email: item.email,
+        builds: Number(item.builds) || 0,
+        createdAt: toIso(item.created_at),
+      })),
+      subscribers: subscribers.rows.map((item) => ({
+        email: item.email,
+        source: item.source || '',
+        createdAt: toIso(item.created_at),
+      })),
+    });
+  }
+
   if (pathname === '/api/admin/subscribers') {
     if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
-    if (!adminAuthorized(request)) return json(response, 401, { error: 'No autorizado.' });
+    if (!(await adminAuthorizedRequest(request))) return json(response, 401, { error: 'No autorizado.' });
     if (!databaseUrl()) return json(response, 503, { error: 'Falta DATABASE_URL.' });
     const result = await dbQuery('SELECT email, source, created_at FROM alium_subscribers WHERE notify = true ORDER BY created_at DESC LIMIT 5000');
     return json(response, 200, {
@@ -543,7 +694,7 @@ async function handleApi(request, response, url) {
 
   if (pathname === '/api/admin/notify') {
     if (method !== 'POST') return json(response, 405, { error: 'Método no permitido.' });
-    if (!adminAuthorized(request)) return json(response, 401, { error: 'No autorizado.' });
+    if (!(await adminAuthorizedRequest(request))) return json(response, 401, { error: 'No autorizado.' });
     if (!databaseUrl()) return json(response, 503, { error: 'Falta DATABASE_URL.' });
     if (!emailConfigured()) return json(response, 501, { error: 'Configura RESEND_API_KEY y EMAIL_FROM para enviar avisos por correo.' });
     const body = await readJson(request);

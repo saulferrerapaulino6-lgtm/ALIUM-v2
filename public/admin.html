@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090910">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="same-origin">
+<title>ALIUM · Panel privado</title>
+<link rel="icon" href="assets/alium-as.png">
+<link rel="stylesheet" href="assets/admin.css?v=1">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-inner">
+    <a class="brand" href="index.html">
+      <img class="brand-logo" src="assets/alium-as.png" alt="ALIUM">
+      <span class="brand-name">ALIUM<small>panel privado</small></span>
+    </a>
+    <div class="top-actions" id="top-actions" hidden>
+      <span class="live-dot" id="live-dot" title="Actualizando"></span>
+      <button class="ghost" id="refresh-btn" type="button">Actualizar</button>
+      <button class="ghost danger" id="logout-btn" type="button">Salir</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap main">
+
+  <!-- Entrada con clave -->
+  <section class="login-card" id="login-view">
+    <p class="kicker">ACCESO PRIVADO</p>
+    <h1>Entra al panel de ALIUM</h1>
+    <p class="muted">Aquí ves las personas registradas y el estado del sitio. Solo se entra con la clave de administrador.</p>
+    <form id="login-form" autocomplete="off">
+      <label for="admin-key">Clave de administrador</label>
+      <div class="key-row">
+        <input id="admin-key" name="key" type="password" placeholder="Escribe tu clave" autocomplete="current-password" required>
+        <button class="primary" type="submit" id="login-btn">Entrar</button>
+      </div>
+      <p class="form-message" id="login-message" role="status" aria-live="polite"></p>
+    </form>
+    <p class="tiny">Guarda este enlace y la clave. Sin ellos no se puede ver el panel.</p>
+  </section>
+
+  <!-- Panel -->
+  <section id="panel-view" hidden>
+    <div class="hero-card">
+      <div>
+        <p class="kicker">MONITOREO DE ALIUM</p>
+        <div class="status-line">
+          <span class="dot" id="status-dot"></span>
+          <h1 id="status-title">Cargando…</h1>
+        </div>
+        <p class="muted" id="status-sub">Consultando el servidor.</p>
+      </div>
+      <div class="hero-side">
+        <div><span class="label">Última actualización</span><b id="updated-at">—</b></div>
+        <div><span class="label">Sitio</span><b><a href="https://alium-pc-builder.netlify.app" target="_blank" rel="noreferrer">Abrir ↗</a></b></div>
+      </div>
+    </div>
+
+    <div class="cards">
+      <article class="card"><span class="label">Usuarios registrados</span><b id="total-users">—</b><small id="last-registration">—</small></article>
+      <article class="card"><span class="label">Nuevos (7 días)</span><b id="recent-users">—</b><small>cuentas creadas esta semana</small></article>
+      <article class="card"><span class="label">Suscriptores</span><b id="total-subscribers">—</b><small>reciben avisos y ofertas</small></article>
+      <article class="card"><span class="label">PCs guardadas</span><b id="total-builds">—</b><small>configuraciones en cuentas</small></article>
+    </div>
+
+    <div class="columns">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Usuarios</h2>
+          <span class="count" id="users-count">—</span>
+        </div>
+        <label class="search">
+          <span class="visually-hidden">Buscar usuario</span>
+          <input id="search-input" type="search" placeholder="Buscar por nombre o correo…" autocomplete="off">
+        </label>
+        <div class="user-list" id="user-list">
+          <p class="muted">Cargando usuarios…</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Suscriptores</h2>
+          <span class="count" id="subscribers-count">—</span>
+        </div>
+        <div class="user-list compact" id="subscriber-list">
+          <p class="muted">Cargando suscriptores…</p>
+        </div>
+        <p class="tiny">Los correos de suscriptores solo se muestran aquí, dentro de tu panel privado.</p>
+      </section>
+    </div>
+
+    <p class="tiny footer-note">Se actualiza solo cada 30 segundos. Si cierras sesión, necesitarás la clave otra vez.</p>
+  </section>
+
+</main>
+
+<script src="assets/admin.js?v=1" defer></script>
+</body>
+</html>

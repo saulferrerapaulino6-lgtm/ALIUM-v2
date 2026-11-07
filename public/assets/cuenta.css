@@ -176,3 +176,7 @@ button#theme-toggle.theme-toggle span[aria-hidden]{position:relative;z-index:2;t
 button#theme-toggle.theme-toggle[aria-checked="false"] span:first-child,button#theme-toggle.theme-toggle[aria-checked="true"] span:nth-child(2){color:var(--ink)}
 .theme-knob{position:absolute;z-index:1;left:3px;top:3px;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#ed347d,#8a3cf0);box-shadow:0 3px 10px #0006;transition:transform .22s cubic-bezier(.4,1.4,.6,1)}
 button#theme-toggle.theme-toggle[aria-checked="true"] .theme-knob{transform:translateX(42px)}
+/* Tema como botón de texto (sin interruptor) */
+button#theme-toggle.theme-toggle{width:auto;min-width:0;height:36px;display:inline-flex;align-items:center;justify-content:center;padding:0 12px;border-radius:9px;background:var(--panel-2);color:var(--ink);font-size:.78rem;line-height:1;box-shadow:none}
+button#theme-toggle.theme-toggle:hover{border-color:var(--purple)}
+:root[data-theme="light"] button#theme-toggle.theme-toggle{background:#fff;color:#5525a7;border-color:#e2dbe9}

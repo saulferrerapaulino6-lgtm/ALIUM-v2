@@ -487,6 +487,27 @@ async function handleApi(request, response, url) {
     });
   }
 
+  // Estadísticas públicas y agregadas: el monitor local detecta registros nuevos sin exponer datos personales.
+  if (pathname === '/api/stats') {
+    if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 200, { ok: true, accounts: false, users: 0, subscribers: 0, lastRegistrationAt: null });
+    const result = await dbQuery(
+      `SELECT
+         (SELECT count(*)::int FROM alium_users) AS users,
+         (SELECT count(*)::int FROM alium_subscribers WHERE notify = true) AS subscribers,
+         (SELECT max(created_at) FROM alium_users) AS last_registration`,
+    );
+    const row = result.rows[0] || {};
+    return json(response, 200, {
+      ok: true,
+      accounts: true,
+      users: Number(row.users) || 0,
+      subscribers: Number(row.subscribers) || 0,
+      lastRegistrationAt: row.last_registration ? new Date(row.last_registration).toISOString() : null,
+      checkedAt: new Date().toISOString(),
+    });
+  }
+
   if (pathname === '/api/providers/ebay/search') {
     if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
     return json(response, 200, await searchEbay(url));

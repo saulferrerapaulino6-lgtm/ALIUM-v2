@@ -1,162 +1,145 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#090910">
-<meta name="description" content="ALIUM arma tu PC ideal pieza por pieza. Tú eliges, nosotros compramos a la tienda, te la entregamos y te damos garantía por escrito.">
-<title>ALIUM — Una PC basada en tus necesidades</title>
-<style>
-:root{color-scheme:dark;--night:#090910;--panel:#11111b;--card:#17151e;--line:#ffffff24;--white:#f7f5fb;--muted:#aaa7b5;--pink:#ed347d;--violet:#8e39ed}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--night);color:var(--white);font-family:Inter,Arial,sans-serif;line-height:1.55}
-a{color:inherit}.wrap{width:min(1120px,calc(100% - 40px));margin:auto}
-header.site{position:sticky;top:0;z-index:20;background:#090910f2;border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
-.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:68px}
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:850;letter-spacing:.18em}
-.brand img{width:46px;height:46px;object-fit:contain}
-nav.links{display:flex;gap:20px;flex-wrap:wrap;align-items:center;font-size:.92rem;color:#cfcad8}
-nav.links a{text-decoration:none}nav.links a:hover{color:#fff}
-.cta{display:inline-flex;align-items:center;gap:10px;padding:13px 22px;border-radius:12px;background:linear-gradient(105deg,var(--pink),var(--violet));color:#fff;text-decoration:none;font-weight:800;box-shadow:0 10px 26px #902ce83d}
-.hero{padding:64px 0 40px;background:radial-gradient(ellipse at 76% 40%,#20102f 0,#100d1b 40%,#090910 75%)}
-.kicker{color:#c6c2ce;font-size:.75rem;letter-spacing:.3em;text-transform:uppercase}
-h1{font-size:clamp(2.6rem,6vw,4.6rem);line-height:1.02;letter-spacing:-.04em;margin:18px 0;text-transform:uppercase}
-h1 em{font-style:normal;background:linear-gradient(100deg,#f23276,#c32ec2 55%,#8042ef);background-clip:text;color:transparent}
-.lead{max-width:560px;color:#c1bdc9;font-size:1.08rem}
-.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
-.ghost{display:inline-flex;align-items:center;padding:13px 20px;border:1px solid var(--line);border-radius:12px;text-decoration:none;font-weight:700}
-section{padding:56px 0}.section-kicker{color:#c9a6ff;font-size:.75rem;letter-spacing:.28em;text-transform:uppercase;margin:0}
-h2{font-size:clamp(1.7rem,3.5vw,2.4rem);letter-spacing:-.03em;margin:10px 0 8px}
-h2 em{font-style:normal;color:#e070b8}
-.sub{color:var(--muted);max-width:640px;margin:0}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
-.card{background:var(--card);border:1px solid #393542;border-radius:18px;padding:22px}
-.card b.num{color:#b47bff}.card h3{margin:8px 0 6px}.card p{margin:0;color:var(--muted);font-size:.93rem}
-.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:28px}
-.steps .card{min-height:170px}
-.team-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:28px}
-.team-card{background:var(--card);border:1px solid #393542;border-radius:22px;overflow:hidden}
-.team-card img{display:block;width:100%;height:420px;object-fit:cover;object-position:top;background:#222}
-.team-body{padding:22px}
-.team-body h3{margin:0;font-size:1.25rem}
-.role{color:#c9a6ff;font-weight:700;font-size:.88rem;margin:4px 0 12px}
-.team-body p{color:#c1bdc9;font-size:.94rem;margin:0 0 10px}
-.team-body p.goal{color:#e8e2f2;border-left:3px solid var(--pink);padding-left:12px}
-.pill{display:inline-block;padding:6px 12px;border-radius:99px;background:#24192e;border:1px solid #493259;color:#d0c3df;font-size:.78rem;font-weight:700;margin:0 6px 6px 0}
-.guarantee{background:linear-gradient(115deg,#241028,#120d1d);border:1px solid #393542;border-radius:22px;padding:28px}
-.guarantee ul{margin:16px 0 0;padding-left:20px;color:#c1bdc9}
-.guarantee li{margin-bottom:8px}
-.wa-float{display:inline-flex;align-items:center;gap:10px;background:#1faa55;color:#fff;font-weight:800;text-decoration:none;padding:14px 22px;border-radius:12px}
-footer{border-top:1px solid var(--line);padding:28px 0;color:#8a8491;font-size:.85rem}
-footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
-@media(max-width:760px){.grid3,.steps{grid-template-columns:1fr}.team-grid{grid-template-columns:1fr}.team-card img{height:360px}nav.links{gap:12px;font-size:.85rem}.nav{flex-wrap:wrap;padding:10px 0}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090910">
+  <meta name="description" content="Diseña una PC a tu medida. Elige las piezas o encuentra una propuesta para tu presupuesto con ALIUM.">
+  <title>ALIUM — Arma tu siguiente nivel</title>
+  <link rel="preload" as="image" href="assets/motherboard.png">
+  <link rel="stylesheet" href="assets/home.css?v=9">
+  <link rel="stylesheet" href="assets/notices.css?v=1">
 </head>
 <body>
-<header class="site"><div class="wrap nav">
-<a class="brand" href="index.html"><img src="assets/alium-as.png" alt="Emblema ALIUM"><span>ALIUM</span></a>
-<nav class="links" aria-label="Navegación principal">
-<a href="configurador.html">Crear mi PC</a>
-<a href="tiendas.html">Tiendas</a>
-<a href="garantia.html">Garantía</a>
-<a href="#como-funciona">Cómo funciona</a>
-<a href="#nosotros">Nosotros</a>
-<a href="pedido.html">Seguir pedido</a>
-</nav>
-</div></header>
+  <main class="home">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="ALIUM, inicio"><img src="assets/alium-as.png" alt=""><span>ALIUM</span></a>
+      <div class="nav-menu">
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Abrir menú"><i aria-hidden="true"></i><span>Menú</span></button>
+        <nav class="site-nav" id="site-nav" aria-label="Navegación principal">
+          <a class="nav-cta" href="configurador.html">Crear mi PC <b aria-hidden="true">↗</b></a>
+          <a href="montaje.html">Montaje</a>
+          <a href="tiendas.html">Tiendas</a>
+          <a href="garantia.html">Garantía</a>
+          <a href="#piezas">Piezas</a>
+          <a href="#recomendaciones">Recomendaciones</a>
+          <a href="#nosotros">Nosotros</a>
+          <a class="nav-account" href="cuenta.html">Mi cuenta</a>
+        </nav>
+      </div>
+    </header>
 
-<main>
-<section class="hero"><div class="wrap">
-<p class="kicker">Arma tu mejor versión</p>
-<h1>Una PC basada en <em>tus necesidades.</em></h1>
-<p class="lead">Tú eliges las piezas. Nosotros las compramos a la tienda, te las entregamos y te damos garantía por escrito. Sin vueltas, sin sorpresas.</p>
-<div class="hero-actions">
-<a class="cta" href="configurador.html">Crear mi PC →</a>
-<a class="ghost" href="#como-funciona">Cómo funciona</a>
-</div>
-<p class="lead" style="font-size:.9rem;margin-top:22px">Anticipo del 50% para confirmar. Saldo contra entrega. Armado por ALIUM: RD$1,500.</p>
-</div></section>
+        <section class="parts-carousel" aria-label="Carrusel de componentes electrónicos">
+      <div class="carousel-track" id="carousel-track" aria-live="polite">
+        <article class="carousel-slide is-active" data-slide="0">
+          <div class="carousel-copy"><span class="carousel-kicker">ALIUM COMPONENTS / 01</span><h2>Potencia para jugar.<br><em>Libertad para crear.</em></h2><a href="configurador.html">Explorar componentes <b aria-hidden="true">↗</b></a></div>
+          <div class="carousel-visual visual-gpu"><span class="visual-orbit"></span><img src="assets/gpu.png" alt="Tarjeta gráfica gaming"></div>
+        </article>
+        <article class="carousel-slide" data-slide="1">
+          <div class="carousel-copy"><span class="carousel-kicker">ALIUM COMPONENTS / 02</span><h2>La base de todo<br><em>gran rendimiento.</em></h2><a href="configurador.html">Elegir placa base <b aria-hidden="true">↗</b></a></div>
+          <div class="carousel-visual visual-board"><span class="visual-orbit"></span><img src="assets/motherboard.png" alt="Placa base para PC"></div>
+        </article>
+        <article class="carousel-slide" data-slide="2">
+          <div class="carousel-copy"><span class="carousel-kicker">ALIUM COMPONENTS / 03</span><h2>Menos temperatura.<br><em>Más rendimiento.</em></h2><a href="configurador.html">Ver refrigeración <b aria-hidden="true">↗</b></a></div>
+          <div class="carousel-visual visual-cooler"><span class="visual-orbit"></span><img src="assets/cooler.png" alt="Sistema de refrigeración líquida"></div>
+        </article>
+      </div>
+      <div class="carousel-controls">
+        <div class="carousel-arrows"><button type="button" id="carousel-prev" aria-label="Elemento anterior">←</button><button type="button" id="carousel-next" aria-label="Elemento siguiente">→</button></div>
+        <div class="carousel-dots" role="group" aria-label="Elegir elemento del carrusel"><button type="button" aria-label="Mostrar tarjeta gráfica" aria-current="true"></button><button type="button" aria-label="Mostrar placa base"></button><button type="button" aria-label="Mostrar refrigeración"></button></div>
+        <span class="carousel-count"><b id="carousel-current">01</b> / 03</span>
+      </div>
+    </section>
 
-<section id="como-funciona"><div class="wrap">
-<p class="section-kicker">Cómo funciona</p>
-<h2>De la idea a tu PC, <em>en 4 pasos.</em></h2>
-<div class="steps">
-<article class="card"><b class="num">01</b><h3>Configura</h3><p>Elige procesador, uso, gama y presupuesto. La página te propone piezas compatibles.</p></article>
-<article class="card"><b class="num">02</b><h3>Pide por WhatsApp</h3><p>Al darle al botón, tu pedido queda guardado y el chat se abre con todas las especificaciones ya escritas. Tú solo pulsas enviar.</p></article>
-<article class="card"><b class="num">03</b><h3>Nosotros compramos</h3><p>ALIUM contacta a la tienda proveedora, compra las piezas y te confirma fecha estimada y anticipo del 50%.</p></article>
-<article class="card"><b class="num">04</b><h3>Recibe y paga el resto</h3><p>Te la entregamos a domicilio o la retiras. Puedes pedirla armada por nosotros o armarla tú.</p></article>
-</div>
-</div></section>
+<section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <h1 id="hero-title">Arma tu<br><em>siguiente nivel.</em></h1>
+        <div class="hero-actions"><a class="build-button" href="configurador.html">Crear mi PC <span aria-hidden="true">↗</span></a></div>
+      </div>
 
-<section id="piezas"><div class="wrap">
-<p class="section-kicker">Piezas</p>
-<h2>Piezas reales, <em>compatibilidad verificada.</em></h2>
-<p class="sub">Procesador, placa base, memoria RAM, almacenamiento, tarjeta gráfica, fuente, gabinete y refrigeración. Verificamos socket, tipo de memoria y potencia antes de pedir.</p>
-<div class="grid3">
-<article class="card"><h3>AMD o Intel</h3><p>Elige tu plataforma. La placa base y la RAM se ajustan solas a ese procesador.</p></article>
-<article class="card"><h3>Precios visibles</h3><p>Precios de referencia en USD y RD$. La tienda confirma el precio final antes de cobrar el anticipo.</p></article>
-<article class="card"><h3>Sin intermediarios externos</h3><p>Trabajamos directo con tiendas proveedoras locales, sin plataformas de terceros en el medio.</p></article>
-</div>
-</div></section>
+      <div class="workbench" aria-hidden="true">
+        <div class="bench-grid" aria-hidden="true"></div>
+        <div class="bench-light" aria-hidden="true"></div>
+        <div class="plinth plinth-back" aria-hidden="true"></div><div class="plinth plinth-front" aria-hidden="true"></div>
+        <figure class="component component-board"><img src="assets/motherboard.png" alt="Placa base gaming" fetchpriority="high"></figure>
+        <figure class="component component-gpu"><img src="assets/gpu.png" alt="Tarjeta gráfica gaming" fetchpriority="high"></figure>
+        <figure class="component component-cooler"><img src="assets/cooler.png" alt="Refrigeración líquida para procesador"></figure>
+        <figure class="component component-memory"><img src="assets/memory.png" alt="Memoria RAM gaming"></figure>
+      </div>
+    </section>
 
-<section id="nosotros"><div class="wrap">
-<p class="section-kicker">Nosotros</p>
-<h2>El equipo <em>detrás de ALIUM.</em></h2>
-<p class="sub">Somos un equipo enfocado en que armar una PC sea simple: piezas reales, precios visibles y asesoría honesta.</p>
-<div class="team-grid">
-<article class="team-card">
-<img src="assets/equipo-saul.jpeg" alt="Saul Ferrera Paulino, fundador de ALIUM" width="1086" height="1448" loading="eager" fetchpriority="high">
-<div class="team-body">
-<h3>Saul Ferrera Paulino</h3>
-<p class="role">Fundador · Estudiante de Ingeniería en Sistemas | Enfoque en Desarrollo de Software</p>
-<p>Soy Saul Ferrera Paulino, estudiante de Ingeniería en Sistemas en la Universidad del Caribe (UNICARIBE), con especial interés en el área de desarrollo de software y las tecnologías de la información.</p>
-<p>Me apasiona la tecnología, la innovación y la creación de soluciones digitales que aporten valor y respondan a necesidades reales. Mi enfoque está orientado al aprendizaje continuo, el desarrollo de habilidades técnicas y la exploración de nuevas herramientas que permitan construir soluciones eficientes y funcionales.</p>
-<p>Busco seguir creciendo profesionalmente en el mundo de la tecnología, fortaleciendo mis conocimientos en programación, desarrollo de software y sistemas informáticos.</p>
-<p class="goal"><strong>Mi objetivo:</strong> Convertir ideas en soluciones tecnológicas mediante la creatividad, el conocimiento y la innovación.</p>
-</div>
-</article>
-<article class="team-card">
-<img src="assets/equipo-adicson.jpeg" alt="Adicson de la Cruz Santana, cofundador de ALIUM" width="1092" height="1598" loading="eager" fetchpriority="high">
-<div class="team-body">
-<h3>Adicson de la Cruz Santana</h3>
-<p class="role">Cofundador · Estudiante de Ciberseguridad | Especialización en Hardware</p>
-<p>Soy Adicson de la Cruz Santana, estudiante del área de Ciberseguridad, con especial interés en el campo del hardware y la infraestructura tecnológica.</p>
-<p>Me apasiona comprender el funcionamiento de los equipos informáticos, sus componentes y la manera en que interactúan para garantizar un entorno tecnológico eficiente y seguro.</p>
-<p>Mi enfoque está orientado al conocimiento del hardware, el mantenimiento de equipos, la arquitectura de computadoras y la seguridad de los sistemas informáticos.</p>
-<p>Busco desarrollar mis habilidades técnicas y ampliar mis conocimientos para contribuir al desarrollo, mantenimiento y protección de infraestructuras tecnológicas.</p>
-<p class="goal"><strong>Mi objetivo:</strong> Fortalecer mis conocimientos en hardware y ciberseguridad para construir entornos tecnológicos confiables, eficientes y seguros.</p>
-</div>
-</article>
-</div>
-</div></section>
 
-<section><div class="wrap">
-<div class="guarantee">
-<p class="section-kicker">Garantía ALIUM</p>
-<h2>Tu dinero y tus piezas, <em>por escrito.</em></h2>
-<p class="sub">Si nos pasamos de la fecha estimada, te rebajamos el precio. Si un componente se daña en nuestras manos, somos responsables. Todo queda por escrito en el chat y en tu pedido.</p>
-<ul>
-<li><strong>Retraso de 1 a 3 días:</strong> 2% de rebaja sobre el total.</li>
-<li><strong>Retraso de 4 a 7 días:</strong> 5% de rebaja sobre el total.</li>
-<li><strong>Más de 7 días:</strong> 10% de rebaja o devolución del anticipo, tú eliges.</li>
-<li><strong>Daño en nuestras manos:</strong> ALIUM repone o paga el componente.</li>
-</ul>
-<p style="margin-top:18px"><a href="garantia.html">Leer la política completa →</a> &nbsp;·&nbsp; <a href="tiendas.html">¿Tienes una tienda? Regístrala →</a></p>
-</div>
-</div></section>
 
-<section><div class="wrap">
-<p class="section-kicker">¿Dudas?</p>
-<h2>Escríbenos <em>por WhatsApp.</em></h2>
-<p class="sub">Te respondemos, te cotizamos y te acompañamos hasta que tu PC esté en tus manos.</p>
-<p style="margin-top:18px"><a class="wa-float" href="https://wa.me/18495889657?text=Hola%20ALIUM%2C%20quiero%20armar%20mi%20PC." target="_blank" rel="noopener">WhatsApp ALIUM · +1 (849) 588-9657</a></p>
-</div></section>
-</main>
+    <section class="home-section recommendations" id="recomendaciones" aria-labelledby="recommend-title">
+      <div class="section-heading"><div><p class="section-kicker">Empieza por el uso</p><h2 id="recommend-title">Una PC basada en <em>tus necesidades.</em></h2></div><p>La recomendación inicial se ajusta a tu presupuesto. Después puedes cambiar cada componente.</p></div>
+      <div class="recommend-grid">
+        <a class="recommend-card" href="configurador.html"><span class="card-mark mark-pink" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11h4m-2-2v4m8-2h.01M18 9h.01M7 17l-1.5 2a2 2 0 0 1-3.5-1.4l1.2-8A3 3 0 0 1 6.2 7h11.6a3 3 0 0 1 3 2.6l1.2 8a2 2 0 0 1-3.5 1.4L17 17H7Z"/></svg></span><div><h3>Jugar</h3><p>Prioriza la tarjeta gráfica y el rendimiento por dólar.</p></div><span class="card-link">Explorar <b>↗</b></span></a>
+        <a class="recommend-card" href="configurador.html"><span class="card-mark mark-purple" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6 4 4M4 20l4.5-1 10-10a2.8 2.8 0 0 0-4-4l-10 10L4 20Z"/><path d="M12 20h8"/></svg></span><div><h3>Crear</h3><p>Equilibra procesador, memoria y almacenamiento rápido.</p></div><span class="card-link">Explorar <b>↗</b></span></a>
+        <a class="recommend-card" href="configurador.html"><span class="card-mark mark-silver" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m-13 5h18m-11 0v2h4v-2"/></svg></span><div><h3>Estudiar y trabajar</h3><p>Elige una configuración ágil para tus tareas diarias.</p></div><span class="card-link">Explorar <b>↗</b></span></a>
+      </div>
+    </section>
 
-<footer><div class="wrap">
-<span>ALIUM — Elige. Configura. Construye.</span>
-<span><a href="configurador.html">Crear mi PC</a> · <a href="tiendas.html">Tiendas</a> · <a href="garantia.html">Garantía</a> · <a href="pedido.html">Seguir pedido</a></span>
-<span>República Dominicana</span>
-</div></footer>
-<script src="assets/alium-config.js"></script>
+    <section class="home-section parts-section" id="piezas" aria-labelledby="parts-title">
+      <div class="section-heading"><div><p class="section-kicker">Elige cada pieza</p><h2 id="parts-title">Construye desde <em>adentro.</em></h2></div><a class="text-link" href="configurador.html">Ver todos los componentes <span>↗</span></a></div>
+      <div class="parts-grid single">
+        <a class="part-card" href="configurador.html"><div class="part-art"><img src="assets/memory.png" alt="" loading="lazy"></div><div class="part-meta"><span>Velocidad</span><b>RAM</b><i>Explorar piezas ↗</i></div></a>
+      </div>
+    </section>
+
+    <section class="home-section about-section" id="nosotros" aria-labelledby="about-title">
+      <div class="section-heading"><div><p class="section-kicker">Sobre ALIUM</p><h2 id="about-title">Tecnología clara, <em>sin vueltas.</em></h2></div><p>Somos un equipo enfocado en que armar una PC sea simple: piezas reales, precios visibles y asesoría honesta. Pides por WhatsApp, pagas el 50% de anticipo y te la entregamos.</p></div>
+      <div class="about-grid">
+        <article class="about-card"><span aria-hidden="true">01</span><h3>Piezas reales</h3><p>Compramos tus piezas a tiendas proveedoras verificadas y te las entregamos con garantía por escrito.</p></article>
+        <article class="about-card"><span aria-hidden="true">02</span><h3>A tu medida</h3><p>Partimos de tu presupuesto y tu uso para recomendarte una base que después puedes ajustar pieza por pieza.</p></article>
+        <article class="about-card"><span aria-hidden="true">03</span><h3>Contigo después</h3><p>Guarda tus configuraciones en tu cuenta y recibe avisos cuando haya ofertas, novedades o mantenimiento.</p></article>
+      </div>
+      <div class="team-grid" aria-label="El equipo de ALIUM">
+        <article class="team-card">
+          <img src="assets/equipo-saul.jpeg" alt="Saul Ferrera Paulino, fundador de ALIUM" width="1086" height="1448" loading="eager" fetchpriority="high">
+          <div class="team-body">
+            <h3>Saul Ferrera Paulino</h3>
+            <p class="team-role">Fundador · Estudiante de Ingeniería en Sistemas | Enfoque en Desarrollo de Software</p>
+            <p>Soy Saul Ferrera Paulino, estudiante de Ingeniería en Sistemas en la Universidad del Caribe (UNICARIBE), con especial interés en el área de desarrollo de software y las tecnologías de la información.</p>
+            <p>Me apasiona la tecnología, la innovación y la creación de soluciones digitales que aporten valor y respondan a necesidades reales. Mi enfoque está orientado al aprendizaje continuo, el desarrollo de habilidades técnicas y la exploración de nuevas herramientas que permitan construir soluciones eficientes y funcionales.</p>
+            <p>Busco seguir creciendo profesionalmente en el mundo de la tecnología, fortaleciendo mis conocimientos en programación, desarrollo de software y sistemas informáticos.</p>
+            <p class="team-goal"><strong>Mi objetivo:</strong> Convertir ideas en soluciones tecnológicas mediante la creatividad, el conocimiento y la innovación.</p>
+          </div>
+        </article>
+        <article class="team-card">
+          <img src="assets/equipo-adicson.jpeg" alt="Adicson de la Cruz Santana, cofundador de ALIUM" width="1092" height="1598" loading="eager" fetchpriority="high">
+          <div class="team-body">
+            <h3>Adicson de la Cruz Santana</h3>
+            <p class="team-role">Cofundador · Estudiante de Ciberseguridad | Especialización en Hardware</p>
+            <p>Soy Adicson de la Cruz Santana, estudiante del área de Ciberseguridad, con especial interés en el campo del hardware y la infraestructura tecnológica.</p>
+            <p>Me apasiona comprender el funcionamiento de los equipos informáticos, sus componentes y la manera en que interactúan para garantizar un entorno tecnológico eficiente y seguro.</p>
+            <p>Mi enfoque está orientado al conocimiento del hardware, el mantenimiento de equipos, la arquitectura de computadoras y la seguridad de los sistemas informáticos.</p>
+            <p>Busco desarrollar mis habilidades técnicas y ampliar mis conocimientos para contribuir al desarrollo, mantenimiento y protección de infraestructuras tecnológicas.</p>
+            <p class="team-goal"><strong>Mi objetivo:</strong> Fortalecer mis conocimientos en hardware y ciberseguridad para construir entornos tecnológicos confiables, eficientes y seguros.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="subscribe-strip" id="suscribirme" aria-labelledby="subscribe-title">
+      <div>
+        <p class="section-kicker">Avisos ALIUM</p>
+        <h2 id="subscribe-title">Ofertas y mantenimiento, <em>sin spam.</em></h2>
+        <p>Déjanos tu correo y te escribiremos solo cuando haya una oferta real, una novedad importante o un mantenimiento programado.</p>
+      </div>
+      <form class="subscribe-form" id="subscribe-form" novalidate>
+        <input id="subscribe-email" type="email" name="email" autocomplete="email" maxlength="254" placeholder="tu@correo.com" aria-label="Correo electrónico para recibir avisos" required>
+        <button type="submit">Recibir avisos</button>
+        <p class="subscribe-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <footer class="home-footer"><a href="index.html">ALIUM</a><span>Elige. Configura. Construye.</span><span><a href="tiendas.html">Tiendas</a> · <a href="garantia.html">Garantía</a> · <a href="pedido.html">Seguir pedido</a></span><a href="montaje.html">¿Prefieres que la armemos? <b>Conoce el montaje ↗</b></a></footer>
+  </main>
+  <script src="assets/home.js?v=8" defer></script>
+  <script src="assets/notices.js?v=1" defer></script>
 </body>
 </html>
+
+
+
+

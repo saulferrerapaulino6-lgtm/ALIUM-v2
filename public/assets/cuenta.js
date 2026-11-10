@@ -4,7 +4,7 @@ const CATEGORY_NAMES = {
   storage: 'Almacenamiento', gpu: 'Tarjeta de video', case: 'Case', psu: 'Fuente',
   os: 'Sistema operativo', monitor: 'Monitor',
 };
-const state = { user: null, builds: [], mode: 'register', configured: true, dialogBuild: null };
+const state = { user: null, builds: [], buildsLoaded: false, mode: 'register', configured: true, dialogBuild: null };
 
 function escapeHTML(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -98,6 +98,10 @@ function partRow(part) {
 function renderBuilds() {
   const list = $('builds-list');
   const empty = $('builds-empty');
+  if (!state.buildsLoaded) {
+    $('builds-count').textContent = 'Cargando tus PCs…';
+    return;
+  }
   const count = state.builds.length;
   $('builds-count').textContent = count === 1 ? '1 configuración guardada' : `${count} configuraciones guardadas`;
   empty.hidden = count > 0;
@@ -145,6 +149,7 @@ async function loadBuilds() {
   try {
     const data = await api('/api/builds');
     state.builds = Array.isArray(data.builds) ? data.builds : [];
+    state.buildsLoaded = true;
     renderBuilds();
   } catch (error) {
     if (/sesión/i.test(error.message)) {
@@ -298,9 +303,12 @@ async function init() {
   });
 
   try {
-    const data = await api('/api/auth/me');
-    state.configured = data.accounts?.configured !== false;
-    state.user = data.user || null;
+    const [me, buildsData] = await Promise.all([
+      api('/api/auth/me'),
+      api('/api/builds').catch(() => null),
+    ]);
+    state.configured = me.accounts?.configured !== false;
+    state.user = me.user || null;
     if (!state.configured) {
       const warning = $('accounts-warning');
       warning.hidden = false;
@@ -308,7 +316,13 @@ async function init() {
       $('auth-submit').disabled = true;
     }
     renderSession();
-    if (state.user) await loadBuilds();
+    if (state.user && buildsData && Array.isArray(buildsData.builds)) {
+      state.builds = buildsData.builds;
+      state.buildsLoaded = true;
+      renderBuilds();
+    } else if (state.user) {
+      await loadBuilds();
+    }
   } catch {
     state.configured = false;
     const warning = $('accounts-warning');

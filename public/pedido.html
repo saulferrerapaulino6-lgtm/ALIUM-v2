@@ -55,18 +55,23 @@ const params = new URLSearchParams(location.search);
 if(params.get("codigo")) document.getElementById("code").value = params.get("codigo").toUpperCase();
 function renderOrder(o){
   const totalUSD = Number(o.total)||0, depUSD = totalUSD * (Number(o.depositPercent)||50) / 100;
+  const subtotalDOP = Math.round((Number(o.subtotal)||0)*FX);
+  const assemblyDOP = o.assembly==="alium" ? Math.round((Number(o.assemblyFee)||0)*FX) : 0;
+  const totalDOP = subtotalDOP + assemblyDOP;
+  const depositDOP = Math.round(totalDOP * (Number(o.depositPercent)||50) / 100);
+  const saldoDOP = totalDOP - depositDOP;
   const parts = Array.isArray(o.parts) ? o.parts : [];
   document.getElementById("result").innerHTML = '<div class="card">'
     + '<span class="status-pill">' + (STATUS[o.status]||o.status||"—") + '</span>'
     + '<h2 style="margin:12px 0 4px">Pedido ' + o.code + '</h2>'
     + '<p style="color:var(--muted);margin:0 0 12px">' + (o.customerName||"") + ' · ' + (o.use||"") + ' · ' + (o.platform||"") + ' · Gama ' + (o.tier||"—") + (o.estimatedDate ? ' · Fecha estimada: <b style="color:var(--ink)">' + o.estimatedDate + '</b>' : '') + '</p>'
     + parts.map(p=> '<div class="part"><div><b>'+p.name+'</b><small>'+(p.category||"")+' · '+(p.spec||"")+'</small></div><div><b>'+fmtUSD(p.price)+'</b></div></div>').join("")
-    + '<div class="row"><span>Subtotal piezas</span><b>'+fmtUSD(o.subtotal)+' · '+fmtDOP(o.subtotal*FX)+'</b></div>'
-    + '<div class="row"><span>Armado</span><b>'+(o.assembly==="alium" ? "ALIUM · " + fmtDOP((Number(o.assemblyFee)||0)*FX) : "Lo armas tú · RD$0")+'</b></div>'
+    + '<div class="row"><span>Subtotal piezas</span><b>'+fmtUSD(o.subtotal)+' · '+fmtDOP(subtotalDOP)+'</b></div>'
+    + '<div class="row"><span>Armado</span><b>'+(o.assembly==="alium" ? "ALIUM · " + fmtDOP(assemblyDOP) : "Lo armas tú · RD$0")+'</b></div>'
     + '<div class="row"><span>Entrega</span><b>'+(o.fulfillment==="entrega" ? "A domicilio" : o.fulfillment==="retiro" ? "Retiro" : "—")+'</b></div>'
-    + '<div class="row"><span>Total</span><b>'+fmtUSD(totalUSD)+' · '+fmtDOP(totalUSD*FX)+'</b></div>'
-    + '<div class="row"><span>Anticipo 50%</span><b>'+fmtUSD(depUSD)+' · '+fmtDOP(depUSD*FX)+'</b></div>'
-    + '<div class="row"><span>Saldo contra entrega</span><b>'+fmtUSD(totalUSD-depUSD)+' · '+fmtDOP((totalUSD-depUSD)*FX)+'</b></div>'
+    + '<div class="row"><span>Total</span><b>'+fmtUSD(totalUSD)+' · '+fmtDOP(totalDOP)+'</b></div>'
+    + '<div class="row"><span>Anticipo 50%</span><b>'+fmtUSD(depUSD)+' · '+fmtDOP(depositDOP)+'</b></div>'
+    + '<div class="row"><span>Saldo contra entrega</span><b>'+fmtUSD(totalUSD-depUSD)+' · '+fmtDOP(saldoDOP)+'</b></div>'
     + '<p style="margin-top:14px"><a href="https://wa.me/18495889657?text='+encodeURIComponent("Hola ALIUM, mi pedido es " + o.code + ". ¿Cómo va?")+'" target="_blank" rel="noopener">Preguntar por este pedido en WhatsApp →</a></p>'
     + '</div>';
 }

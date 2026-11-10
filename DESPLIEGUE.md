@@ -28,9 +28,12 @@ Se configuran en **Project configuration → Environment variables**. Nunca se s
 | `RESEND_API_KEY` | Envío de correos de bienvenida y avisos (secreta). |
 | `EMAIL_FROM` | Remitente verificado en Resend, por ejemplo `ALIUM <avisos@tudominio.com>`. |
 | `PUBLIC_SITE_URL` | URL pública usada en los enlaces de los correos. |
-| `ADMIN_TOKEN` | Token para el panel de avisos y el envío masivo (secreto). |
-| `EBAY_CLIENT_ID` / `EBAY_CLIENT_SECRET` | Búsquedas reales de eBay (secretas). |
-| `EBAY_ENV` / `EBAY_MARKETPLACE_ID` | `production` / `EBAY_US`. |
+| `RESEND_API_KEY` | Envío de correos de bienvenida y avisos (secreta). |
+
+No se usan marketplaces externos ni variables de afiliados. Las variables
+antiguas de esos servicios ya no existen en el código ni en `.env.example`:
+si siguen configuradas en Netlify, se pueden borrar. El panel admin no usa
+`ADMIN_TOKEN`: valida la clave contra el hash guardado en Neon.
 
 `DATABASE_URL` está guardada como variable **secreta** con los contextos `production`, `deploy-preview` y `branch-deploy`, y con los scopes `builds`, `functions` y `runtime`.
 
@@ -43,7 +46,7 @@ Se configuran en **Project configuration → Environment variables**. Nunca se s
 ## Limitaciones del plan gratuito
 
 - Netlify Free incluye 100 GB de ancho de banda y 125 000 invocaciones de funciones al mes. Es de sobra para empezar y **no suspende el sitio por inactividad**.
-- Las funciones tienen un límite de ejecución por invocación; las consultas de eBay pueden tardar si el proveedor responde lento.
+- Las funciones tienen un límite de ejecución por invocación; las consultas a la base de datos se hacen al vuelo, así que responden rápido.
 - Neon Free incluye 1 GB de almacenamiento y 100 horas de cómputo al mes. El cómputo se suspende al quedar inactivo y se reactiva solo en la siguiente consulta (puede añadir una fracción de segundo a la primera petición).
 - Los archivos estáticos se sirven con caché. Al cambiar CSS o JavaScript se sube la versión en las URL (`?v=7`) para forzar la actualización.
 

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ALIUM — Tiendas aliadas</title>
+<script src="assets/alium-config.js"></script>
+<style>
+:root{--ink:#f7f5fb;--muted:#aaa6b5;--line:#34313e;--card:#17151e}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);background:#0c0b12;font:16px/1.55 Inter,Arial,sans-serif}
+a{color:#b981ff}.wrap{width:min(960px,calc(100% - 40px));margin:auto}
+.topbar{background:#090910f2;border-bottom:1px solid var(--line)}.nav{display:flex;align-items:center;justify-content:space-between;min-height:68px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:850;letter-spacing:.14em;text-decoration:none;color:#fff}
+.brand img{width:46px;height:46px;object-fit:contain}.nav a{color:#cfcad8;text-decoration:none;margin-left:18px;font-size:.92rem}
+h1{font-size:clamp(2rem,5vw,3rem);letter-spacing:-.03em;margin:10px 0}
+h1 span{background:linear-gradient(95deg,#db43d5,#9450ff);background-clip:text;color:transparent}
+.sub{color:var(--muted);max-width:640px}
+.card{background:var(--card);border:1px solid #393542;border-radius:18px;padding:22px;margin:18px 0}
+.card h2{margin:0 0 8px;font-size:1.25rem}.card p{color:var(--muted);margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid .card{margin:0}.grid h3{margin:0 0 6px;font-size:1rem}
+.field{margin:12px 0}.field label{display:block;font-weight:700;font-size:.9rem;margin-bottom:6px}
+.field input,.field textarea,.field select{width:100%;padding:12px;border:1px solid #3d3948;border-radius:11px;background:#17151e;color:#f8f6fb}
+.btn{border:0;border-radius:12px;padding:13px 22px;font-weight:750;cursor:pointer;color:#fff;background:linear-gradient(105deg,#ed347d,#8a3cf0)}
+.note{background:#211b2a;border:1px solid #433453;color:#d0c3df;border-radius:12px;padding:12px 14px;font-size:.88rem}
+.ok{background:#12291c;border:1px solid #2c5c40;color:#b9f0cd;border-radius:12px;padding:14px 16px;margin-top:14px}
+.ok[hidden]{display:none}
+.store{border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:10px;background:#18161f}
+.store b{font-size:1.05rem}.store small{display:block;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding:24px 0;color:#aaa6b5;font-size:.85rem}
+@media(max-width:640px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap nav">
+<a class="brand" href="index.html"><img src="assets/alium-as.png" alt="Emblema ALIUM"><span>ALIUM</span></a>
+<div><a href="index.html">Inicio</a><a href="configurador.html">Crear mi PC</a><a href="garantia.html">Garantía</a><a href="pedido.html">Seguir pedido</a></div>
+</div></header>
+<main class="wrap" style="padding:36px 0 56px">
+<h1>Tiendas <span>aliadas</span></h1>
+<p class="sub">ALIUM no vende piezas propias: presenta tu tienda, recibe pedidos por WhatsApp y te compra las piezas a ti. Tú vendes más; nosotros nos encargamos del cliente.</p>
+
+<div class="grid">
+<article class="card"><h3>1 · Te registras</h3><p>Dejas nombre de la tienda, contacto, ciudad y tu página web o catálogo.</p></article>
+<article class="card"><h3>2 · Cargamos tus productos</h3><p>ALIUM alimenta tu catálogo desde tu página: nombre, modelo, imagen real y precio. Nosotros validamos la compatibilidad.</p></article>
+<article class="card"><h3>3 · Vendes y cobras</h3><p>Por cada venta cerrada desde ALIUM, la tienda nos paga una comisión del <strong>10%</strong>. Sin mensualidad.</p></article>
+</div>
+
+<div class="card">
+<h2>¿Cómo nos conectamos contigo?</h2>
+<p>En esta misma página dejas los datos de tu empresa. De tu página web tomamos los productos para mostrarlos en ALIUM: el precio, la imagen real del producto y el modelo. ALIUM pone la compatibilidad: si una pieza no va con el resto de la PC, no se ofrece.</p>
+<p>Cuando un cliente pide, ALIUM te contacta, te compra las piezas y coordina la entrega. El cliente paga el 50% de anticipo a ALIUM y el resto contra entrega.</p>
+<p>¿Prefieres hablarlo primero? Escríbenos por WhatsApp y te presentamos la idea completa. También puedes ver la <a href="presentacion.html">presentación para empresas</a>.</p>
+</div>
+
+<div class="card">
+<h2>Registra tu tienda</h2>
+<form id="store-form">
+<div class="field"><label for="business">Nombre de la tienda / empresa *</label><input id="business" required placeholder="Ej.: TecnoParts SRL"></div>
+<div class="field"><label for="contact">Nombre de contacto *</label><input id="contact" required placeholder="Ej.: Ana Pérez"></div>
+<div class="field"><label for="email">Correo *</label><input id="email" type="email" required placeholder="tienda@correo.com"></div>
+<div class="field"><label for="phone">WhatsApp / teléfono</label><input id="phone" placeholder="Ej.: 809 555 1234"></div>
+<div class="field"><label for="website">Página web o catálogo (https://) *</label><input id="website" type="url" required placeholder="https://www.tutienda.com"></div>
+<div class="field"><label for="city">Ciudad</label><input id="city" placeholder="Ej.: Santo Domingo"></div>
+<div class="field"><label for="cats">¿Qué vendes?</label><select id="cats"><option>Componentes de PC en general</option><option>Procesadores y placas base</option><option>Memoria y almacenamiento</option><option>Tarjetas gráficas</option><option>Fuentes, gabinetes y refrigeración</option><option>PCs armadas</option></select></div>
+<div class="field"><label for="msg">Mensaje para ALIUM</label><textarea id="msg" rows="3" placeholder="Cuéntanos qué vendes y cómo te gustaría trabajar con nosotros."></textarea></div>
+<button class="btn" type="submit">Enviar registro</button>
+<div class="ok" id="store-ok" hidden></div>
+</form>
+<p class="note" style="margin-top:14px">Al registrarte aceptas que ALIUM te contacte por WhatsApp o correo para validar tu catálogo. Tus datos no se comparten con terceros fuera de este proceso.</p>
+</div>
+
+<div class="card">
+<h2>Tiendas aliadas</h2>
+<div id="stores"><p style="color:var(--muted)">Cargando tiendas…</p></div>
+</div>
+</main>
+<footer><div class="wrap">ALIUM — Elige. Configura. Construye. · WhatsApp: +1 (849) 588-9657</div></footer>
+<script>
+async function loadStores(){
+  const box = document.getElementById("stores");
+  try{
+    const r = await fetch("/api/stores");
+    if(!r.ok) throw new Error();
+    const d = await r.json();
+    const list = d.stores || [];
+    if(!list.length){ box.innerHTML = "<p style='color:var(--muted)'>Aún no hay tiendas publicadas. Sé la primera: regístrate arriba.</p>"; return; }
+    box.innerHTML = list.map(s=> '<div class="store"><b>'+escapeHtml(s.businessName||s.name||"Tienda")+'</b><small>'+escapeHtml(s.city||"")+(s.website?' · <a href="'+escapeHtml(s.website)+'" target="_blank" rel="noopener">Visitar web ↗</a>':"")+'</small></div>').join("");
+  }catch(e){ box.innerHTML = "<p style='color:var(--muted)'>Aún no hay tiendas publicadas. Sé la primera: regístrate arriba.</p>"; }
+}
+function escapeHtml(v){ return String(v??"").replace(/[&<>\"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+loadStores();
+document.getElementById("store-form").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const payload = {
+    businessName: document.getElementById("business").value.trim(),
+    contactName: document.getElementById("contact").value.trim(),
+    email: document.getElementById("email").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    website: document.getElementById("website").value.trim(),
+    city: document.getElementById("city").value.trim(),
+    categories: document.getElementById("cats").value,
+    message: document.getElementById("msg").value.trim()
+  };
+  const ok = document.getElementById("store-ok");
+  let saved = false;
+  try{ const r = await fetch("/api/suppliers", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload)}); saved = r.ok; }catch(e){}
+  try{ const l = JSON.parse(localStorage.getItem("alium_suppliers")||"[]"); l.push({...payload, at:new Date().toISOString()}); localStorage.setItem("alium_suppliers", JSON.stringify(l)); }catch(e){}
+  ok.hidden = false;
+  ok.innerHTML = "<strong>Registro recibido" + (saved ? " y guardado" : " en este dispositivo") + ".</strong> Te contactaremos por WhatsApp o correo para validar tu catálogo. Si prefieres, escríbenos ahora: <a href='https://wa.me/" + (window.ALIUM_CONFIG?.whatsappNumber||"18495889657") + "?text=" + encodeURIComponent("Hola ALIUM, soy " + payload.businessName + " y quiero registrar mi tienda.") + "' target='_blank' rel='noopener'>WhatsApp ALIUM →</a>";
+  e.target.reset();
+});
+</script>
+</body>
+</html>

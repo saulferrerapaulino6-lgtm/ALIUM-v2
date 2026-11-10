@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ALIUM — Seguir mi pedido</title>
+<script src="assets/alium-config.js"></script>
+<style>
+:root{--ink:#f7f5fb;--muted:#aaa6b5;--line:#34313e;--card:#17151e}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);background:#0c0b12;font:16px/1.55 Inter,Arial,sans-serif}
+a{color:#b981ff}.wrap{width:min(860px,calc(100% - 40px));margin:auto}
+.topbar{background:#090910f2;border-bottom:1px solid var(--line)}.nav{display:flex;align-items:center;justify-content:space-between;min-height:68px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:850;letter-spacing:.14em;text-decoration:none;color:#fff}
+.brand img{width:46px;height:46px;object-fit:contain}.nav a{color:#cfcad8;text-decoration:none;margin-left:18px;font-size:.92rem}
+h1{font-size:clamp(2rem,5vw,3rem);letter-spacing:-.03em;margin:10px 0}
+.sub{color:var(--muted);max-width:620px}
+.card{background:var(--card);border:1px solid #393542;border-radius:18px;padding:22px;margin:18px 0}
+.field{margin:12px 0}.field label{display:block;font-weight:700;font-size:.9rem;margin-bottom:6px}
+.field input{width:100%;padding:12px;border:1px solid #3d3948;border-radius:11px;background:#17151e;color:#f8f6fb}
+.btn{border:0;border-radius:12px;padding:13px 22px;font-weight:750;cursor:pointer;color:#fff;background:linear-gradient(105deg,#ed347d,#8a3cf0)}
+.status-pill{display:inline-block;padding:6px 14px;border-radius:99px;background:#24192e;border:1px solid #493259;color:#d0c3df;font-weight:700;font-size:.85rem}
+.part{display:flex;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:9px;background:#18161f}
+.part small{display:block;color:var(--muted)}
+.row{display:flex;justify-content:space-between;padding:4px 0;color:var(--muted)}
+.row b{color:var(--ink)}
+.err{color:#ff9a9a}.ok{color:#8ee6b6}
+footer{border-top:1px solid var(--line);padding:24px 0;color:#aaa6b5;font-size:.85rem}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap nav">
+<a class="brand" href="index.html"><img src="assets/alium-as.png" alt="Emblema ALIUM"><span>ALIUM</span></a>
+<div><a href="index.html">Inicio</a><a href="configurador.html">Crear mi PC</a><a href="tiendas.html">Tiendas</a><a href="garantia.html">Garantía</a></div>
+</div></header>
+<main class="wrap" style="padding:36px 0 56px">
+<h1>Seguir mi pedido</h1>
+<p class="sub">Escribe tu código de pedido (empieza por AL-) y el mismo WhatsApp o correo con el que pediste. Ahí ves el estado, las piezas, el total, el anticipo y la fecha estimada.</p>
+<div class="card">
+<form id="track-form">
+<div class="field"><label for="code">Código de pedido</label><input id="code" placeholder="Ej.: AL-XXXXXXX" autocomplete="off"></div>
+<div class="field"><label for="contact">WhatsApp o correo del pedido</label><input id="contact" placeholder="El mismo que dejaste al pedir" autocomplete="off"></div>
+<button class="btn" type="submit">Buscar pedido</button>
+</form>
+<p id="track-msg" style="margin:12px 0 0"></p>
+</div>
+<div id="result"></div>
+</main>
+<footer><div class="wrap">ALIUM — Elige. Configura. Construye. · WhatsApp: +1 (849) 588-9657</div></footer>
+<script>
+const FX = (window.ALIUM_CONFIG||{}).fxRate || 60.84;
+const fmtUSD = n => "US$" + Number(n).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtDOP = n => "RD$" + Math.round(Number(n)).toLocaleString("es-DO");
+const STATUS = {nuevo:"Nuevo", contactado:"Contactado", cotizado:"Cotizado", confirmado:"Confirmado", comprando:"Comprando piezas", en_transito:"En tránsito", armando:"Armando tu PC", listo:"Listo para entregar", entregado:"Entregado", cancelado:"Cancelado"};
+const params = new URLSearchParams(location.search);
+if(params.get("codigo")) document.getElementById("code").value = params.get("codigo").toUpperCase();
+function renderOrder(o){
+  const totalUSD = Number(o.total)||0, depUSD = totalUSD * (Number(o.depositPercent)||50) / 100;
+  const parts = Array.isArray(o.parts) ? o.parts : [];
+  document.getElementById("result").innerHTML = '<div class="card">'
+    + '<span class="status-pill">' + (STATUS[o.status]||o.status||"—") + '</span>'
+    + '<h2 style="margin:12px 0 4px">Pedido ' + o.code + '</h2>'
+    + '<p style="color:var(--muted);margin:0 0 12px">' + (o.customerName||"") + ' · ' + (o.use||"") + ' · ' + (o.platform||"") + ' · Gama ' + (o.tier||"—") + (o.estimatedDate ? ' · Fecha estimada: <b style="color:var(--ink)">' + o.estimatedDate + '</b>' : '') + '</p>'
+    + parts.map(p=> '<div class="part"><div><b>'+p.name+'</b><small>'+(p.category||"")+' · '+(p.spec||"")+'</small></div><div><b>'+fmtUSD(p.price)+'</b></div></div>').join("")
+    + '<div class="row"><span>Subtotal piezas</span><b>'+fmtUSD(o.subtotal)+' · '+fmtDOP(o.subtotal*FX)+'</b></div>'
+    + '<div class="row"><span>Armado</span><b>'+(o.assembly==="alium" ? "ALIUM · " + fmtDOP((Number(o.assemblyFee)||0)*FX) : "Lo armas tú · RD$0")+'</b></div>'
+    + '<div class="row"><span>Entrega</span><b>'+(o.fulfillment==="entrega" ? "A domicilio" : o.fulfillment==="retiro" ? "Retiro" : "—")+'</b></div>'
+    + '<div class="row"><span>Total</span><b>'+fmtUSD(totalUSD)+' · '+fmtDOP(totalUSD*FX)+'</b></div>'
+    + '<div class="row"><span>Anticipo 50%</span><b>'+fmtUSD(depUSD)+' · '+fmtDOP(depUSD*FX)+'</b></div>'
+    + '<div class="row"><span>Saldo contra entrega</span><b>'+fmtUSD(totalUSD-depUSD)+' · '+fmtDOP((totalUSD-depUSD)*FX)+'</b></div>'
+    + '<p style="margin-top:14px"><a href="https://wa.me/18495889657?text='+encodeURIComponent("Hola ALIUM, mi pedido es " + o.code + ". ¿Cómo va?")+'" target="_blank" rel="noopener">Preguntar por este pedido en WhatsApp →</a></p>'
+    + '</div>';
+}
+document.getElementById("track-form").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const code = document.getElementById("code").value.trim().toUpperCase();
+  const contact = document.getElementById("contact").value.trim();
+  const msg = document.getElementById("track-msg");
+  if(!code || !contact){ msg.innerHTML = '<span class="err">Escribe el código y tu contacto.</span>'; return; }
+  msg.textContent = "Buscando…";
+  try{
+    const r = await fetch("/api/orders/track?code=" + encodeURIComponent(code) + "&contact=" + encodeURIComponent(contact));
+    const d = await r.json();
+    if(!r.ok || !d.order) throw new Error(d.error || "No lo encontramos.");
+    msg.innerHTML = '<span class="ok">Pedido encontrado.</span>';
+    renderOrder(d.order);
+  }catch(err){
+    // Respaldo: pedido guardado en este dispositivo
+    try{
+      const local = JSON.parse(localStorage.getItem("alium_orders")||"[]");
+      const found = local.find(o=> String(o.code||"").toUpperCase()===code);
+      if(found){
+        msg.innerHTML = '<span class="ok">Pedido encontrado en este dispositivo (aún no sincronizado).</span>';
+        renderOrder({code:found.code, customerName:found.customerName, use:found.use, platform:found.platform, tier:found.tier, status:"nuevo", parts:found.parts, subtotal:found.subtotal, assemblyFee:found.assemblyFee, total:found.subtotal + found.assemblyFee, assembly:found.assembly, fulfillment:found.fulfillment, depositPercent:50, estimatedDate:null});
+        return;
+      }
+    }catch(e){}
+    msg.innerHTML = '<span class="err">No encontramos un pedido con ese código y contacto. Revisa los datos o escríbenos por WhatsApp.</span>';
+    document.getElementById("result").innerHTML = "";
+  }
+});
+</script>
+</body>
+</html>

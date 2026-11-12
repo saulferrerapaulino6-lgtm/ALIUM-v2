@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090910">
+<meta name="description" content="Presentación de ALIUM para empresas y tiendas: modelo de intermediación, cómo funciona y cómo conectarse.">
+<title>ALIUM · Presentación para empresas</title>
+<link rel="icon" href="assets/alium-as.png">
+<link rel="stylesheet" href="assets/alium-ui.css?v=2">
+<style>
+  .deck-wrap{width:min(1180px,calc(100% - 40px));margin:auto;padding:26px 0 50px}
+  .deck-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+  .deck-bar p{margin:0;color:var(--muted);font-size:.82rem}
+  .deck-bar .deck-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .deck{position:relative;border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,#191620,#0e0c14);box-shadow:0 30px 90px #0008;overflow:hidden}
+  .slide{display:none;min-height:min(72vh,680px);padding:clamp(26px,4.4vw,58px);position:relative}
+  .slide.active{display:flex;flex-direction:column;justify-content:center}
+  .slide:after{content:attr(data-n);position:absolute;right:clamp(22px,4vw,52px);bottom:20px;color:#6f6880;font:700 .8rem monospace}
+  .slide .kicker{margin-bottom:10px}
+  .slide h1,.slide h2{margin:0 0 14px;font-size:clamp(2.2rem,5vw,4.4rem);line-height:.98}
+  .slide h2{font-size:clamp(1.9rem,4vw,3.4rem)}
+  .slide h1 em,.slide h2 em{font-style:normal;background:linear-gradient(100deg,#f34480,#9945f1);background-clip:text;color:transparent}
+  .slide .lead{max-width:820px;color:#bdb7c8;font-size:clamp(.95rem,1.4vw,1.15rem);line-height:1.7;margin:0}
+  .slide .big{font-size:clamp(1.05rem,1.7vw,1.3rem);color:#e7e2ee;max-width:860px;line-height:1.65}
+  .slide-grid{display:grid;gap:12px;margin-top:22px}
+  .slide-grid.two{grid-template-columns:1fr 1fr}
+  .slide-grid.three{grid-template-columns:repeat(3,1fr)}
+  .slide-card{padding:18px;border:1px solid #3a3445;border-radius:14px;background:#17141f}
+  .slide-card b{display:block;margin-bottom:4px;font-size:.98rem;color:#fff}
+  .slide-card span{display:block;color:#aaa6b5;font-size:.83rem;line-height:1.55}
+  .slide-card .mini{display:inline-grid;place-items:center;width:30px;height:30px;margin-bottom:9px;border-radius:9px;background:#24192e;border:1px solid #4a3561;color:#cf8bff;font-weight:800;font-size:.75rem}
+  .slide-list{margin:16px 0 0;padding:0;list-style:none;display:grid;gap:10px}
+  .slide-list li{position:relative;padding-left:26px;color:#c8c2d2;font-size:.94rem;line-height:1.55}
+  .slide-list li:before{content:"→";position:absolute;left:0;color:#c77bff;font-weight:800}
+  .slide-list b{color:#fff}
+  .slide .price-row{display:flex;align-items:center;gap:14px;margin-top:20px;padding:16px 18px;border:1px solid #4a3561;border-radius:14px;background:linear-gradient(110deg,#24182f,#17121f)}
+  .slide .price-row b{font-size:clamp(1.5rem,3vw,2.2rem);color:#cf8bff}
+  .slide .price-row span{color:#aaa6b5;font-size:.84rem;line-height:1.5}
+  .deck-controls{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px}
+  .deck-controls button{width:46px;height:46px;border:1px solid #3d3948;border-radius:50%;background:#17151e;color:#f7f5fb;font-size:1.2rem;cursor:pointer}
+  .deck-controls button:hover{border-color:#a44ce5;background:#211a2b}
+  .deck-dots{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+  .deck-dots button{width:9px;height:9px;padding:0;border:0;border-radius:99px;background:#5a5366;cursor:pointer;transition:.18s}
+  .deck-dots button[aria-current="true"]{width:26px;background:linear-gradient(90deg,#ed347d,#914bfa)}
+  .deck-note{text-align:center;color:#8f8899;font-size:.74rem;margin:14px 0 0}
+  :root[data-theme="light"] .deck{background:#fff;border-color:#e8e3ee;box-shadow:0 24px 70px rgba(39,20,67,.1)}
+  :root[data-theme="light"] .slide .lead,:root[data-theme="light"] .slide .big{color:#4d4658}
+  :root[data-theme="light"] .slide-card{background:#faf7ff;border-color:#e8e3ee}
+  :root[data-theme="light"] .slide-card b{color:#201b2b}
+  :root[data-theme="light"] .slide-card span{color:#655e70}
+  :root[data-theme="light"] .slide-card .mini{background:#f2e9fb;border-color:#e0d2ee;color:#7138c8}
+  :root[data-theme="light"] .slide-list li{color:#4d4658}
+  :root[data-theme="light"] .slide-list b{color:#201b2b}
+  :root[data-theme="light"] .slide .price-row{background:linear-gradient(110deg,#faf3ff,#fff);border-color:#e0d2ee}
+  :root[data-theme="light"] .slide .price-row b{color:#7138c8}
+  :root[data-theme="light"] .slide .price-row span{color:#655e70}
+  :root[data-theme="light"] .deck-controls button{background:#fff;color:#201b2b;border-color:#e2dbe9}
+  :root[data-theme="light"] .slide:after{color:#a79cb4}
+  @media(max-width:760px){
+    .deck-wrap{width:calc(100% - 24px);padding-top:16px}
+    .slide{min-height:auto;padding:28px 20px 40px}
+    .slide-grid.two,.slide-grid.three{grid-template-columns:1fr}
+    .deck-controls{position:sticky;bottom:12px;padding:8px;border:1px solid var(--line);border-radius:99px;background:#0f0d15e8;backdrop-filter:blur(14px)}
+    :root[data-theme="light"] .deck-controls{background:#ffffffe8}
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="index.html"><img src="assets/alium-as.png" alt="ALIUM"><span>ALIUM</span></a>
+    <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-label="Abrir menú">☰</button>
+    <nav class="nav" data-nav aria-label="Navegación principal">
+      <a class="nav-cta" href="configurador.html">Crear mi PC ↗</a>
+      <a href="tiendas.html">Tiendas</a>
+      <a href="garantia.html">Garantía</a>
+      <a class="active" href="presentacion.html">Cómo funciona</a>
+      <a href="pedido.html">Seguimiento</a>
+      <a href="cuenta.html">Mi cuenta</a>
+      <button class="theme-btn" type="button" data-theme-toggle aria-label="Cambiar tema">☀</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="deck-wrap">
+    <div class="deck-bar">
+      <p>Presentación para empresas, tiendas y aliados · usa las flechas del teclado o los botones.</p>
+      <div class="deck-actions"><a class="button quiet small" href="tiendas.html">Registrar mi tienda</a><a class="button primary small" href="#cierre" data-go="9">Ir al cierre</a></div>
+    </div>
+
+    <section class="deck" id="deck" aria-live="polite">
+      <article class="slide active" data-n="01/10">
+        <p class="kicker">ALIUM · Propuesta para empresas</p>
+        <h1>La PC que quieres.<br><em>Con alguien que responde.</em></h1>
+        <p class="lead">ALIUM es una plataforma de intermediación de compra de PCs. El cliente elige las piezas, cierra por WhatsApp, paga 50% de anticipo y recibe su equipo con garantía escrita. ALIUM compra al proveedor y asume la relación.</p>
+        <div class="slide-grid three">
+          <div class="slide-card"><b>Piezas reales</b><span>Catálogo cargado por ALIUM con precio, modelo e imagen de tiendas verificadas.</span></div>
+          <div class="slide-card"><b>Compatibilidad validada</b><span>Socket, memoria, potencia y espacio revisados antes de recomendar.</span></div>
+          <div class="slide-card"><b>Responsable único</b><span>Un solo interlocutor por el dinero, las piezas y la fecha de entrega.</span></div>
+        </div>
+      </article>
+
+      <article class="slide" data-n="02/10">
+        <p class="kicker">El problema</p>
+        <h2>Comprar piezas por separado <em>es un riesgo.</em></h2>
+        <p class="lead">El cliente investiga, compra en varias tiendas, espera envíos distintos y descubre al final que una pieza no encaja. Si algo llega dañado, cada vendedor culpa al otro.</p>
+        <ul class="slide-list">
+          <li><b>Incompatibilidad:</b> socket, DDR, vatios o espacio del case.</li>
+          <li><b>Sin responsable:</b> la tienda culpa al courier y el courier a la tienda.</li>
+          <li><b>Dinero expuesto:</b> pagos por adelantado sin contrato ni fecha.</li>
+          <li><b>Tiempo perdido:</b> el cliente termina haciendo de proyecto, comprador y técnico.</li>
+        </ul>
+      </article>
+
+      <article class="slide" data-n="03/10">
+        <p class="kicker">La propuesta</p>
+        <h2>ALIUM compra, valida <em>y responde.</em></h2>
+        <p class="big">No vendemos publicaciones de marketplace. Trabajamos con tiendas proveedoras reales: ALIUM carga el catálogo, valida la compatibilidad y compra al proveedor cuando el cliente confirma. El cliente tiene una sola persona responsable.</p>
+        <div class="slide-grid two" style="margin-top:20px">
+          <div class="slide-card"><b>Para el cliente</b><span>Una PC armada a su medida, precio claro, anticipo del 50%, fecha acordada y garantía escrita.</span></div>
+          <div class="slide-card"><b>Para la tienda</b><span>Ventas cerradas con anticipo, catálogo publicado por ALIUM y comisión del 10% por venta.</span></div>
+        </div>
+      </article>
+
+      <article class="slide" data-n="04/10">
+        <p class="kicker">Cómo funciona</p>
+        <h2>Cinco pasos, <em>todo por escrito.</em></h2>
+        <div class="slide-grid">
+          <div class="slide-card"><span class="mini">1</span><b>El cliente elige</b><span>Configurador con validación de compatibilidad y presupuesto en USD o RD$.</span></div>
+          <div class="slide-card"><span class="mini">2</span><b>Guarda y abre WhatsApp</b><span>El pedido queda en la base de ALIUM y el mensaje sale con todas las especificaciones.</span></div>
+          <div class="slide-card"><span class="mini">3</span><b>ALIUM confirma</b><span>Disponibilidad, precio final, entrega y fecha estimada antes de pagar.</span></div>
+          <div class="slide-card"><span class="mini">4</span><b>Anticipo del 50%</b><span>Con el anticipo, ALIUM compra las piezas al proveedor.</span></div>
+          <div class="slide-card"><span class="mini">5</span><b>Armado y entrega</b><span>ALIUM arma o entrega sellado. Saldo contra entrega y garantía activa.</span></div>
+        </div>
+      </article>
+
+      <article class="slide" data-n="05/10">
+        <p class="kicker">Qué gana el cliente</p>
+        <h2>Menos riesgo, <em>más claridad.</em></h2>
+        <div class="slide-grid three">
+          <div class="slide-card"><b>Un solo responsable</b><span>ALIUM responde por el dinero y por las piezas mientras están en sus manos.</span></div>
+          <div class="slide-card"><b>Fecha con consecuencia</b><span>Si nos retrasamos, hay compensación o rebaja escrita. No es una promesa verbal.</span></div>
+          <div class="slide-card"><b>Armado opcional</b><span>Por RD$1,500 ALIUM arma, prueba, cablea e instala el sistema con garantía de 30 días.</span></div>
+          <div class="slide-card"><b>Compatibilidad validada</b><span>Menos devoluciones y menos “esto no encaja”.</span></div>
+          <div class="slide-card"><b>Pago en dos partes</b><span>50% para iniciar y 50% contra entrega. El riesgo se reparte.</span></div>
+          <div class="slide-card"><b>Todo escrito</b><span>Pedido, precio, fecha y garantía quedan registrados y consultables.</span></div>
+        </div>
+      </article>
+
+      <article class="slide" data-n="06/10">
+        <p class="kicker">Qué gana la tienda</p>
+        <h2>Ventas cerradas, <em>sin trabajo extra.</em></h2>
+        <div class="slide-grid two">
+          <div class="slide-card"><b>Catálogo cargado por ALIUM</b><span>Tú entregas los datos del producto; ALIUM publica precio, imagen real y especificaciones.</span></div>
+          <div class="slide-card"><b>Cliente con anticipo</b><span>ALIUM compra con el 50% ya confirmado. Menos carritos abandonados.</span></div>
+          <div class="slide-card"><b>Comisión clara</b><span>10% por venta concretada. Sin cuota fija ni costo por publicar.</span></div>
+          <div class="slide-card"><b>Sin soporte al cliente final</b><span>ALIUM gestiona la relación, el seguimiento y la garantía comercial.</span></div>
+        </div>
+        <div class="price-row"><b>10%</b><span>Comisión por venta · se acuerda por escrito antes de activar el catálogo · sin costo mensual.</span></div>
+      </article>
+
+      <article class="slide" data-n="07/10">
+        <p class="kicker">Cómo conectarse</p>
+        <h2>Cuatro pasos <em>para ser tienda ALIUM.</em></h2>
+        <div class="slide-grid">
+          <div class="slide-card"><span class="mini">1</span><b>Registro en la web</b><span>Nombre del negocio, web, ciudad, contacto y categorías. Formulario en tiendas.html.</span></div>
+          <div class="slide-card"><span class="mini">2</span><b>Validación</b><span>ALIUM revisa que la tienda sea real y que el catálogo tenga precios y modelos verificables.</span></div>
+          <div class="slide-card"><span class="mini">3</span><b>Carga del catálogo</b><span>ALIUM publica productos con precio, imagen real, modelo y datos técnicos de compatibilidad.</span></div>
+          <div class="slide-card"><span class="mini">4</span><b>Primera venta</b><span>Se acuerda la comisión, se activa el catálogo y se define el proceso de compra y entrega.</span></div>
+        </div>
+        <div class="notice" style="margin-top:18px"><b>Requisito mínimo:</b> tienda real, precios actualizados, imagen real del producto y factura o comprobante de compra.</div>
+      </article>
+
+      <article class="slide" data-n="08/10">
+        <p class="kicker">Confianza</p>
+        <h2>La garantía <em>es parte del producto.</em></h2>
+        <div class="slide-grid three">
+          <div class="slide-card"><b>Anticipo 50%</b><span>El saldo se paga contra entrega, después de verificar el pedido.</span></div>
+          <div class="slide-card"><b>Compensación por retraso</b><span>2%, 5% o 10% de rebaja según los días de retraso, o devolución del anticipo.</span></div>
+          <div class="slide-card"><b>Responsabilidad de ALIUM</b><span>Responde por daños, pérdida o error de compra mientras las piezas están en sus manos.</span></div>
+          <div class="slide-card"><b>Armado con garantía</b><span>30 días sobre cableado, montaje, sistema y prueba de estabilidad.</span></div>
+          <div class="slide-card"><b>Reclamo en 24 h</b><span>Respuesta inicial en un día y solución por escrito.</span></div>
+          <div class="slide-card"><b>Seguimiento público</b><span>Código de pedido y estado consultable sin exponer datos personales.</span></div>
+        </div>
+      </article>
+
+      <article class="slide" data-n="09/10">
+        <p class="kicker">Modelo de ingresos</p>
+        <h2>Cuatro fuentes, <em>una sola promesa.</em></h2>
+        <ul class="slide-list">
+          <li><b>Margen por intermediación:</b> diferencia entre el precio confirmado al cliente y el precio del proveedor.</li>
+          <li><b>Armado ALIUM:</b> RD$1,500 por PC armada, probada y con sistema instalado.</li>
+          <li><b>Entrega:</b> costo según zona, confirmado antes del anticipo.</li>
+          <li><b>Comisión de tienda:</b> 10% por venta concretada, sin cuota fija.</li>
+        </ul>
+        <div class="notice" style="margin-top:18px"><b>Ventaja del modelo:</b> no dependemos de marketplaces externos. Trabajamos con proveedores locales, precios reales y una relación directa que podemos controlar.</div>
+      </article>
+
+      <article class="slide" data-n="10/10" id="cierre">
+        <p class="kicker">Siguiente paso</p>
+        <h2>Construyamos la <em>primera alianza.</em></h2>
+        <p class="lead">Si tienes una tienda de tecnología, registra el negocio hoy. Si representas una empresa, escríbenos para acordar una prueba piloto con catálogo real, comisión clara y garantía escrita.</p>
+        <div class="slide-grid two" style="margin-top:22px">
+          <div class="slide-card"><b>Para tiendas</b><span>Registra el negocio en la web. ALIUM valida, carga el catálogo y acuerda la comisión.</span></div>
+          <div class="slide-card"><b>Para empresas</b><span>Piloto de compra de PCs con precio cerrado, fecha con compensación y seguimiento.</span></div>
+        </div>
+        <div class="hero-actions" style="margin-top:22px">
+          <a class="button primary" href="tiendas.html#registro">Registrar mi tienda</a>
+          <a class="button quiet" href="configurador.html">Probar el configurador</a>
+          <a class="button quiet" href="garantia.html">Leer la garantía</a>
+        </div>
+      </article>
+    </section>
+
+    <div class="deck-controls">
+      <button type="button" id="deck-prev" aria-label="Diapositiva anterior">←</button>
+      <div class="deck-dots" id="deck-dots" role="group" aria-label="Elegir diapositiva"></div>
+      <button type="button" id="deck-next" aria-label="Diapositiva siguiente">→</button>
+    </div>
+    <p class="deck-note">También puedes imprimir esta página o exportarla a PDF desde el navegador para compartirla con tu equipo.</p>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <span>© <span data-year></span> ALIUM · Tecnología clara, sin vueltas.</span>
+    <div class="footer-links"><a href="index.html">Inicio</a><a href="tiendas.html">Tiendas</a><a href="garantia.html">Garantía</a><a href="pedido.html">Seguimiento</a></div>
+  </div>
+</footer>
+<script src="assets/alium-ui.js?v=2" defer></script>
+<script>
+(function(){
+  const slides = [...document.querySelectorAll('.slide')];
+  const dots = document.getElementById('deck-dots');
+  const prev = document.getElementById('deck-prev');
+  const next = document.getElementById('deck-next');
+  let current = 0;
+  if (!slides.length) return;
+  slides.forEach((slide, index) => {
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.setAttribute('aria-label', `Ir a la diapositiva ${index + 1}`);
+    dot.addEventListener('click', () => go(index));
+    dots.append(dot);
+  });
+  function go(index) {
+    current = (index + slides.length) % slides.length;
+    slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+    [...dots.children].forEach((dot, i) => dot.setAttribute('aria-current', String(i === current)));
+    document.querySelector('.deck').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    history.replaceState(null, '', `#slide-${current + 1}`);
+  }
+  prev.addEventListener('click', () => go(current - 1));
+  next.addEventListener('click', () => go(current + 1));
+  document.querySelectorAll('[data-go]').forEach((button) => {
+    button.addEventListener('click', (event) => { event.preventDefault(); go(Number(button.dataset.go)); });
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowRight' || event.key === 'PageDown') go(current + 1);
+    if (event.key === 'ArrowLeft' || event.key === 'PageUp') go(current - 1);
+  });
+  const hash = Number((location.hash.match(/slide-(\d+)/) || [])[1]);
+  go(hash ? hash - 1 : 0);
+})();
+</script>
+</body>
+</html>

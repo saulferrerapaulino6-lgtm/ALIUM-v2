@@ -2,6 +2,8 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const dns = require('node:dns').promises;
+const net = require('node:net');
 
 const root = path.resolve(__dirname);
 const staticRoot = path.join(root, 'public');
@@ -26,18 +28,16 @@ function loadLocalEnv() {
 }
 loadLocalEnv();
 
-const DEFAULT_QUERIES = {
-  cpu: 'desktop CPU processor', cooler: 'CPU cooler', motherboard: 'desktop PC motherboard',
-  memory: 'desktop RAM memory', storage: 'NVMe SSD', gpu: 'graphics card GPU',
-  case: 'desktop PC case', psu: 'PC power supply', os: 'Windows 11 license', monitor: 'gaming monitor',
-};
-const ALLOWED_CATEGORIES = new Set(Object.keys(DEFAULT_QUERIES));
+const CATEGORY_IDS = ['cpu', 'cooler', 'motherboard', 'memory', 'storage', 'gpu', 'case', 'psu', 'os', 'monitor'];
+const ALLOWED_CATEGORIES = new Set(CATEGORY_IDS);
 const SESSION_DAYS = 30;
 const SESSION_COOKIE = 'alium_session';
 const ADMIN_COOKIE = 'alium_admin';
 const ADMIN_DAYS = 30;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-let cachedEbayToken = null;
+const ORDER_STATUSES = ['nuevo', 'contactado', 'cotizado', 'confirmado', 'comprando', 'en_transito', 'armando', 'listo', 'entregado', 'cancelado'];
+const SUPPLIER_STATUSES = ['nuevo', 'contactado', 'aprobado', 'rechazado'];
+const DEPOSIT_PERCENT = 50;
 
 /* ------------------------------------------------------------------ */
 /* Base de datos (Neon Postgres)                                       */
@@ -94,6 +94,75 @@ CREATE TABLE IF NOT EXISTS alium_admin_sessions (
   expires_at timestamptz NOT NULL
 );
 CREATE INDEX IF NOT EXISTS alium_admin_sessions_expiry_idx ON alium_admin_sessions(expires_at);
+
+CREATE TABLE IF NOT EXISTS alium_suppliers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_name text NOT NULL,
+  contact_name text NOT NULL,
+  email text NOT NULL,
+  phone text,
+  website text,
+  city text,
+  categories text,
+  message text,
+  status text NOT NULL DEFAULT 'nuevo',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS alium_suppliers_created_idx ON alium_suppliers(created_at DESC);
+CREATE INDEX IF NOT EXISTS alium_suppliers_status_idx ON alium_suppliers(status);
+
+CREATE TABLE IF NOT EXISTS alium_products (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  supplier_id uuid REFERENCES alium_suppliers(id) ON DELETE CASCADE,
+  category text NOT NULL,
+  name text NOT NULL,
+  brand text,
+  model text,
+  spec text,
+  price numeric(12,2) NOT NULL DEFAULT 0,
+  currency text NOT NULL DEFAULT 'USD',
+  image_url text,
+  product_url text,
+  attributes jsonb NOT NULL DEFAULT '{}'::jsonb,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS alium_products_supplier_idx ON alium_products(supplier_id);
+CREATE INDEX IF NOT EXISTS alium_products_category_idx ON alium_products(category) WHERE active = true;
+
+CREATE TABLE IF NOT EXISTS alium_orders (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  code text NOT NULL UNIQUE,
+  user_id uuid REFERENCES alium_users(id) ON DELETE SET NULL,
+  customer_name text NOT NULL,
+  customer_contact text NOT NULL,
+  customer_email text,
+  platform text,
+  use_case text,
+  tier text,
+  currency text NOT NULL DEFAULT 'USD',
+  budget numeric(12,2),
+  subtotal numeric(12,2) NOT NULL DEFAULT 0,
+  assembly_fee numeric(12,2) NOT NULL DEFAULT 0,
+  total numeric(12,2) NOT NULL DEFAULT 0,
+  assembly text NOT NULL DEFAULT 'cliente',
+  fulfillment text NOT NULL DEFAULT 'retiro',
+  address text,
+  notes text,
+  parts jsonb NOT NULL DEFAULT '[]'::jsonb,
+  deposit_percent integer NOT NULL DEFAULT 50,
+  status text NOT NULL DEFAULT 'nuevo',
+  estimated_date date,
+  admin_notes text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS alium_orders_created_idx ON alium_orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS alium_orders_status_idx ON alium_orders(status);
+CREATE INDEX IF NOT EXISTS alium_orders_user_idx ON alium_orders(user_id);
+ALTER TABLE alium_orders ADD COLUMN IF NOT EXISTS assembly_fee numeric(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE alium_orders ADD COLUMN IF NOT EXISTS total numeric(12,2) NOT NULL DEFAULT 0;
 `;
 
 function databaseUrl() {
@@ -325,8 +394,8 @@ function cleanNumber(value) {
   return Number.isFinite(number) && Math.abs(number) <= 1e9 ? Math.round(number * 100) / 100 : null;
 }
 
-const PART_TEXT_FIELDS = ['id', 'name', 'brand', 'spec', 'seller', 'currency', 'condition', 'itemUrl', 'imageUrl', 'platform', 'socket', 'memory', 'form'];
-const PART_NUMBER_FIELDS = ['price', 'watts', 'tier', 'minPsu', 'length', 'clearance', 'shipping', 'radiator'];
+const PART_TEXT_FIELDS = ['id', 'name', 'brand', 'spec', 'seller', 'currency', 'sourceCurrency', 'condition', 'itemUrl', 'imageUrl', 'platform', 'socket', 'memory', 'form'];
+const PART_NUMBER_FIELDS = ['price', 'sourcePrice', 'watts', 'tier', 'minPsu', 'length', 'clearance', 'shipping', 'radiator'];
 const PART_BOOL_FIELDS = ['igpu', 'integrated', 'isLive'];
 const PART_ARRAY_FIELDS = ['supports', 'forms'];
 
@@ -358,81 +427,222 @@ function sanitizePart(raw) {
 }
 
 /* ------------------------------------------------------------------ */
-/* eBay                                                               */
+/* Tiendas, productos y pedidos                                       */
 /* ------------------------------------------------------------------ */
 
-function ebayApiRoot() {
-  return process.env.EBAY_ENV === 'sandbox' ? 'https://api.sandbox.ebay.com' : 'https://api.ebay.com';
+function orderCode() {
+  const stamp = Date.now().toString(36).toUpperCase().slice(-5);
+  return `AL-${stamp}${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
 }
 
-async function getEbayAccessToken() {
-  const clientId = process.env.EBAY_CLIENT_ID;
-  const clientSecret = process.env.EBAY_CLIENT_SECRET;
-  if (!clientId || !clientSecret) {
-    throw httpError(503, 'La búsqueda de eBay aún no está configurada en el servidor.');
+function validHttpUrl(value) {
+  try {
+    const url = new URL(String(value));
+    return url.protocol === 'https:' ? url.href : '';
+  } catch {
+    return '';
   }
-  if (cachedEbayToken && cachedEbayToken.expiresAt > Date.now() + 30_000) return cachedEbayToken.value;
-
-  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-  const response = await fetch(`${ebayApiRoot()}/identity/v1/oauth2/token`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${credentials}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({ grant_type: 'client_credentials', scope: 'https://api.ebay.com/oauth/api_scope' }),
-    signal: AbortSignal.timeout(15_000),
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data.access_token) {
-    throw httpError(502, 'eBay no aceptó las credenciales. Revisa que sean del mismo entorno (Sandbox o Producción).');
-  }
-  cachedEbayToken = { value: data.access_token, expiresAt: Date.now() + Math.max(60, data.expires_in - 60) * 1000 };
-  return cachedEbayToken.value;
 }
 
-async function searchEbay(url) {
-  const category = url.searchParams.get('category') || 'cpu';
-  if (!ALLOWED_CATEGORIES.has(category)) throw httpError(400, 'La categoría solicitada no es válida.');
-  const typedQuery = (url.searchParams.get('q') || '').trim().slice(0, 100);
-  const platform = (url.searchParams.get('platform') || '').trim();
-  let q = typedQuery || DEFAULT_QUERIES[category];
-  if (category === 'cpu' && platform && !q.toLowerCase().includes(platform.toLowerCase())) q = `${platform} ${q}`;
-  const query = new URLSearchParams({ q, limit: '24' });
-  const apiRoot = ebayApiRoot();
-  const token = await getEbayAccessToken();
-  const response = await fetch(`${apiRoot}/buy/browse/v1/item_summary/search?${query}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'X-EBAY-C-MARKETPLACE-ID': process.env.EBAY_MARKETPLACE_ID || 'EBAY_US',
-      'Accept-Language': 'en-US',
-      Accept: 'application/json',
-    },
-    signal: AbortSignal.timeout(15_000),
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw httpError(502, data.errors?.[0]?.message || `eBay respondió con estado ${response.status}.`);
+function sanitizeAttributes(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const out = {};
+  const strings = ['socket', 'memory', 'form', 'condition'];
+  const numbers = ['watts', 'minPsu', 'length', 'clearance', 'radiator', 'tier'];
+  const booleans = ['igpu', 'integrated'];
+  const arrays = ['supports', 'forms'];
+  for (const field of strings) {
+    if (typeof raw[field] === 'string' && raw[field].trim()) out[field] = cleanText(raw[field], 40);
   }
-  const items = (data.itemSummaries || []).map((item) => ({
-    id: item.itemId,
-    title: item.title || 'Producto de eBay',
-    image: item.image?.imageUrl || item.thumbnailImages?.[0]?.imageUrl || '',
-    price: Number(item.price?.value),
-    currency: item.price?.currency || 'USD',
-    seller: item.seller?.username || 'Vendedor de eBay',
-    condition: item.condition || item.conditionId || 'Condición no indicada',
-    shipping: item.shippingOptions?.[0]?.shippingCost?.value ?? null,
-    shippingCurrency: item.shippingOptions?.[0]?.shippingCost?.currency || item.price?.currency || 'USD',
-    url: item.itemAffiliateWebUrl || item.itemWebUrl || '',
-    platform,
-  })).filter((item) => Number.isFinite(item.price));
+  for (const field of numbers) {
+    if (raw[field] !== undefined && raw[field] !== null && raw[field] !== '') {
+      const number = cleanNumber(raw[field]);
+      if (number !== null) out[field] = number;
+    }
+  }
+  for (const field of booleans) if (typeof raw[field] === 'boolean') out[field] = raw[field];
+  for (const field of arrays) {
+    if (Array.isArray(raw[field])) {
+      out[field] = raw[field].filter((item) => typeof item === 'string' && item.trim()).map((item) => cleanText(item, 40)).slice(0, 12);
+    }
+  }
+  return out;
+}
 
+function productFromRow(row) {
+  const attributes = row.attributes && typeof row.attributes === 'object' ? row.attributes : {};
   return {
-    provider: 'eBay', marketplace: process.env.EBAY_MARKETPLACE_ID || 'EBAY_US',
-    query: q, total: data.total || items.length, items,
-    fetchedAt: new Date().toISOString(),
+    id: `db:${row.id}`,
+    dbId: row.id,
+    category: row.category,
+    name: row.name,
+    brand: row.brand || '',
+    model: row.model || '',
+    spec: row.spec || '',
+    price: Number(row.price) || 0,
+    currency: row.currency || 'USD',
+    imageUrl: row.image_url || '',
+    itemUrl: row.product_url || '',
+    seller: row.supplier_name || 'Tienda ALIUM',
+    supplierId: row.supplier_id || null,
+    source: 'store',
+    active: row.active,
+    createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+    ...attributes,
   };
+}
+
+function isPrivateAddress(address) {
+  if (!net.isIP(address)) return true;
+  if (address === '::1' || address === '0.0.0.0') return true;
+  if (address.startsWith('fe80:') || address.startsWith('fc') || address.startsWith('fd')) return true;
+  if (address.startsWith('::ffff:')) return isPrivateAddress(address.slice(7));
+  const parts = address.split('.').map(Number);
+  if (parts.length !== 4) return false;
+  return parts[0] === 10 || parts[0] === 127 || parts[0] === 0
+    || (parts[0] === 169 && parts[1] === 254)
+    || (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31)
+    || (parts[0] === 192 && parts[1] === 168);
+}
+
+async function assertPublicUrl(value) {
+  const raw = validHttpUrl(value);
+  if (!raw) throw httpError(400, 'La dirección debe empezar por https:// y ser válida.');
+  const url = new URL(raw);
+  if (url.hostname === 'localhost' || url.hostname.endsWith('.local')) throw httpError(400, 'Esa dirección no está permitida.');
+  let records;
+  try {
+    records = await dns.lookup(url.hostname, { all: true });
+  } catch {
+    throw httpError(400, 'No se pudo resolver el dominio de la tienda.');
+  }
+  if (!records.length || records.some((record) => isPrivateAddress(record.address))) {
+    throw httpError(400, 'Esa dirección no está permitida.');
+  }
+  return url.href;
+}
+
+function metaContent(html, patterns) {
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match && match[1]) return cleanText(match[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'"), 500);
+  }
+  return '';
+}
+
+async function importProductFromUrl(rawUrl) {
+  const url = await assertPublicUrl(rawUrl);
+  const response = await fetch(url, {
+    headers: { 'User-Agent': 'ALIUM-CatalogBot/1.0 (+https://alium-pc-builder.netlify.app)', Accept: 'text/html,application/xhtml+xml' },
+    redirect: 'follow',
+    signal: AbortSignal.timeout(12_000),
+  });
+  if (!response.ok) throw httpError(502, `La tienda respondió con estado ${response.status}.`);
+  const type = String(response.headers.get('content-type') || '');
+  if (!type.includes('text/html') && !type.includes('application/xhtml')) throw httpError(415, 'La dirección no devolvió una página HTML.');
+  const html = (await response.text()).slice(0, 800_000);
+  const title = metaContent(html, [/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i, /<title[^>]*>([^<]+)<\/title>/i]);
+  const image = metaContent(html, [/<meta[^>]+property=["']og:image(?::secure_url)?["'][^>]+content=["']([^"']+)["']/i]);
+  const description = metaContent(html, [/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i, /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i]);
+  const price = metaContent(html, [/<meta[^>]+property=["']product:price:amount["'][^>]+content=["']([^"']+)["']/i, /"price"\s*:\s*"?([0-9]+(?:\.[0-9]+)?)"?/i]);
+  const currency = metaContent(html, [/<meta[^>]+property=["']product:price:currency["'][^>]+content=["']([^"']+)["']/i, /"priceCurrency"\s*:\s*"([A-Z]{3})"/i]);
+  const brand = metaContent(html, [/<meta[^>]+property=["']product:brand["'][^>]+content=["']([^"']+)["']/i, /"brand"\s*:\s*\{[^}]*"name"\s*:\s*"([^"]+)"/i]);
+  return {
+    url,
+    name: title.slice(0, 160),
+    brand: brand.slice(0, 60),
+    spec: description.slice(0, 300),
+    imageUrl: image ? validHttpUrl(image) : '',
+    price: cleanNumber(String(price).replace(',', '.')) || 0,
+    currency: /^[A-Z]{3}$/.test(currency) ? currency : 'USD',
+  };
+}
+
+function orderFromRow(row) {
+  const toIso = (value) => (value ? new Date(value).toISOString() : null);
+  return {
+    id: row.id,
+    code: row.code,
+    userId: row.user_id || null,
+    customerName: row.customer_name,
+    customerContact: row.customer_contact,
+    customerEmail: row.customer_email || '',
+    platform: row.platform || '',
+    use: row.use_case || '',
+    tier: row.tier || '',
+    currency: row.currency || 'USD',
+    budget: row.budget === null ? null : Number(row.budget),
+    subtotal: Number(row.subtotal) || 0,
+    assemblyFee: Number(row.assembly_fee) || 0,
+    total: Number(row.total) || (Number(row.subtotal) || 0) + (Number(row.assembly_fee) || 0),
+    assembly: row.assembly,
+    fulfillment: row.fulfillment,
+    address: row.address || '',
+    notes: row.notes || '',
+    parts: row.parts || [],
+    depositPercent: Number(row.deposit_percent) || DEPOSIT_PERCENT,
+    status: row.status,
+    estimatedDate: row.estimated_date ? new Date(row.estimated_date).toISOString().slice(0, 10) : null,
+    adminNotes: row.admin_notes || '',
+    createdAt: toIso(row.created_at),
+    updatedAt: toIso(row.updated_at),
+  };
+}
+
+function publicOrder(row, options = {}) {
+  const order = orderFromRow(row);
+  if (options.tracking) {
+    delete order.id;
+    delete order.userId;
+    delete order.customerContact;
+    delete order.customerEmail;
+    delete order.address;
+    delete order.adminNotes;
+  }
+  return order;
+}
+
+async function insertOrderRecord(payload) {
+  let lastError;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      const result = await dbQuery(
+        `INSERT INTO alium_orders
+           (code, user_id, customer_name, customer_contact, customer_email, platform, use_case, tier,
+            currency, budget, subtotal, assembly_fee, total, assembly, fulfillment, address, notes, parts, deposit_percent, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'USD',$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,'nuevo')
+         RETURNING *`,
+        [
+          orderCode(), payload.userId || null, payload.customerName, payload.customerContact, payload.customerEmail || null,
+          payload.platform || null, payload.use || null, payload.tier || null, payload.budget, payload.subtotal,
+          payload.assemblyFee || 0, payload.total || payload.subtotal, payload.assembly, payload.fulfillment,
+          payload.address || null, payload.notes || null, JSON.stringify(payload.parts), DEPOSIT_PERCENT,
+        ],
+      );
+      return result.rows[0];
+    } catch (error) {
+      lastError = error;
+      if (error.code !== '23505') throw error;
+    }
+  }
+  throw lastError;
+}
+
+async function trackOrder(code, contact) {
+  const normalizedCode = String(code || '').trim().toUpperCase();
+  if (!/^AL-[A-Z0-9]{5,14}$/.test(normalizedCode)) return null;
+  const result = await dbQuery('SELECT * FROM alium_orders WHERE code = $1', [normalizedCode]);
+  const row = result.rows[0];
+  if (!row) return null;
+  const provided = String(contact || '').trim().toLowerCase();
+  if (provided.length < 4) return null;
+  const phone = String(row.customer_contact || '').replace(/\D/g, '');
+  const email = String(row.customer_email || '').toLowerCase();
+  const providedDigits = provided.replace(/\D/g, '');
+  const contactMatch = (email && provided === email)
+    || (providedDigits.length >= 4 && phone.endsWith(providedDigits))
+    || (providedDigits.length >= 4 && provided === phone.slice(-providedDigits.length));
+  return contactMatch ? row : null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -546,13 +756,14 @@ async function handleApi(request, response, url) {
   const method = request.method;
   const pathname = url.pathname;
 
-  if (pathname === '/api/providers/status') {
+  if (pathname === '/api/site') {
     if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
     return json(response, 200, {
-      ebay: { configured: Boolean(process.env.EBAY_CLIENT_ID && process.env.EBAY_CLIENT_SECRET) },
-      amazon: { available: false, reason: 'Amazon Creators API requiere cuenta de Afiliados y aprobación expresa para mostrar su contenido en una app móvil y junto a otros comercios.' },
+      ok: true,
+      depositPercent: DEPOSIT_PERCENT,
+      orders: true,
+      suppliers: true,
       accounts: { configured: Boolean(databaseUrl()), provider: 'Neon Postgres' },
-      email: { configured: emailConfigured(), provider: 'Resend' },
     });
   }
 
@@ -577,11 +788,6 @@ async function handleApi(request, response, url) {
     });
   }
 
-  if (pathname === '/api/providers/ebay/search') {
-    if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
-    return json(response, 200, await searchEbay(url));
-  }
-
   if (pathname === '/api/subscribe') {
     if (method !== 'POST') return json(response, 405, { error: 'Método no permitido.' });
     if (!databaseUrl()) return json(response, 503, { error: 'Los avisos todavía no están configurados. Falta DATABASE_URL en el servidor.' });
@@ -597,6 +803,125 @@ async function handleApi(request, response, url) {
       [email, source],
     );
     return json(response, 201, { ok: true, message: 'Te avisaremos de novedades, ofertas y mantenimiento.' });
+  }
+
+  if (pathname === '/api/products') {
+    if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 200, { ok: true, products: [] });
+    const category = cleanText(url.searchParams.get('category'), 30);
+    if (category && !ALLOWED_CATEGORIES.has(category)) return json(response, 400, { error: 'Categoría no válida.' });
+    const params = [];
+    let where = "p.active = true AND s.status = 'aprobado'";
+    if (category) { params.push(category); where += ` AND p.category = $${params.length}`; }
+    const result = await dbQuery(
+      `SELECT p.*, s.business_name AS supplier_name, s.website AS supplier_website
+         FROM alium_products p
+         JOIN alium_suppliers s ON s.id = p.supplier_id
+        WHERE ${where}
+        ORDER BY p.created_at DESC
+        LIMIT 500`,
+      params,
+    );
+    return json(response, 200, { ok: true, products: result.rows.map(productFromRow) });
+  }
+
+  if (pathname === '/api/stores') {
+    if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 200, { ok: true, stores: [] });
+    const result = await dbQuery(
+      `SELECT id, business_name, website, city, categories, created_at
+         FROM alium_suppliers WHERE status = 'aprobado' ORDER BY created_at DESC LIMIT 100`,
+    );
+    return json(response, 200, {
+      ok: true,
+      stores: result.rows.map((row) => ({
+        id: row.id,
+        name: row.business_name,
+        website: row.website || '',
+        city: row.city || '',
+        categories: String(row.categories || '').split(',').map((item) => item.trim()).filter(Boolean),
+      })),
+    });
+  }
+
+  if (pathname === '/api/suppliers') {
+    if (method !== 'POST') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'El registro de tiendas todavía no está configurado. Falta DATABASE_URL.' });
+    if (!rateLimit(`supplier:${clientIp(request)}`, 8, 60 * 60 * 1000)) return json(response, 429, { error: 'Demasiados intentos. Escríbenos por WhatsApp.' });
+    if (!String(request.headers['content-type'] || '').toLowerCase().startsWith('application/json')) return json(response, 415, { error: 'Formato de solicitud no admitido.' });
+    const body = await readJson(request, 64 * 1024);
+    const businessName = cleanText(body.businessName, 120);
+    const contactName = cleanText(body.contactName, 80);
+    const email = cleanText(body.email, 254).toLowerCase();
+    const phone = cleanText(body.phone, 40);
+    const website = validHttpUrl(body.website);
+    const city = cleanText(body.city, 80);
+    const message = cleanText(body.message, 1500);
+    const categories = (Array.isArray(body.categories) ? body.categories : String(body.categories || '').split(','))
+      .map((item) => cleanText(item, 30)).filter((item) => ALLOWED_CATEGORIES.has(item));
+    if (businessName.length < 2) return json(response, 400, { error: 'Escribe el nombre de la tienda.' });
+    if (contactName.length < 2) return json(response, 400, { error: 'Escribe el nombre de la persona de contacto.' });
+    if (!EMAIL_RE.test(email)) return json(response, 400, { error: 'Escribe un correo electrónico válido.' });
+    if (phone.length < 7) return json(response, 400, { error: 'Escribe un WhatsApp o teléfono de contacto.' });
+    if (!website) return json(response, 400, { error: 'Escribe la página web de la tienda (debe empezar por https://).' });
+    if (city.length < 2) return json(response, 400, { error: 'Escribe la ciudad o zona de la tienda.' });
+    await dbQuery(
+      `INSERT INTO alium_suppliers (business_name, contact_name, email, phone, website, city, categories, message)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [businessName, contactName, email, phone, website, city, categories.join(','), message || null],
+    );
+    return json(response, 201, {
+      ok: true,
+      message: 'Recibimos los datos de tu tienda. Te contactaremos por WhatsApp o correo para validar el catálogo.',
+    });
+  }
+
+  if (pathname === '/api/orders/track') {
+    if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'El seguimiento todavía no está configurado.' });
+    if (!rateLimit(`track:${clientIp(request)}`, 30)) return json(response, 429, { error: 'Demasiados intentos. Espera unos minutos.' });
+    const row = await trackOrder(url.searchParams.get('code'), url.searchParams.get('contact'));
+    if (!row) return json(response, 404, { error: 'No encontramos un pedido con ese código y contacto. Revisa los datos.' });
+    return json(response, 200, { ok: true, order: publicOrder(row, { tracking: true }) });
+  }
+
+  if (pathname === '/api/orders') {
+    if (method !== 'POST') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'Los pedidos todavía no están configurados. Falta DATABASE_URL.' });
+    if (!rateLimit(`order:${clientIp(request)}`, 12, 60 * 60 * 1000)) return json(response, 429, { error: 'Has enviado muchos pedidos. Escríbenos por WhatsApp para continuar.' });
+    if (!String(request.headers['content-type'] || '').toLowerCase().startsWith('application/json')) return json(response, 415, { error: 'Formato de solicitud no admitido.' });
+    const body = await readJson(request, 192 * 1024);
+    const customerName = cleanText(body.customerName, 80);
+    const customerContact = cleanText(body.customerContact, 80);
+    const customerEmail = cleanText(body.customerEmail, 254).toLowerCase();
+    const platform = ['AMD', 'Intel'].includes(body.platform) ? body.platform : null;
+    const use = cleanText(body.use, 40) || null;
+    const tier = cleanText(body.tier, 20) || null;
+    const budget = cleanNumber(body.budget);
+    const assembly = body.assembly === 'alium' ? 'alium' : body.assembly === 'cliente' ? 'cliente' : '';
+    const fulfillment = body.fulfillment === 'entrega' ? 'entrega' : body.fulfillment === 'retiro' ? 'retiro' : '';
+    const address = cleanText(body.address, 300);
+    const notes = cleanText(body.notes, 1000);
+    const rawParts = Array.isArray(body.parts) ? body.parts : [];
+    const parts = rawParts.map(sanitizePart).filter(Boolean).slice(0, 20);
+    if (customerName.length < 2) return json(response, 400, { error: 'Escribe tu nombre.' });
+    if (customerContact.length < 5) return json(response, 400, { error: 'Escribe un WhatsApp o correo para contactarte.' });
+    if (customerEmail && !EMAIL_RE.test(customerEmail)) return json(response, 400, { error: 'El correo electrónico no es válido.' });
+    if (!parts.length) return json(response, 400, { error: 'Tu pedido no tiene piezas. Elige al menos una.' });
+    if (!assembly) return json(response, 400, { error: 'Elige si quieres que ALIUM arme la PC o si la armas tú.' });
+    if (!fulfillment) return json(response, 400, { error: 'Elige entre entrega a domicilio o retiro.' });
+    if (fulfillment === 'entrega' && address.length < 5) return json(response, 400, { error: 'Escribe la dirección de entrega.' });
+    const subtotal = Math.round(parts.reduce((sum, part) => sum + (Number(part.price) || 0), 0) * 100) / 100;
+    const rawFee = assembly === 'alium' ? Number(body.assemblyFee) || 0 : 0;
+    const assemblyFee = Math.round(Math.min(Math.max(rawFee, 0), 2000) * 100) / 100;
+    const total = Math.round((subtotal + assemblyFee) * 100) / 100;
+    const user = await getSession(request).catch(() => null);
+    const row = await insertOrderRecord({
+      userId: user ? user.id : null,
+      customerName, customerContact, customerEmail, platform, use, tier, budget, subtotal,
+      assemblyFee, total, assembly, fulfillment, address, notes, parts,
+    });
+    return json(response, 201, { ok: true, order: publicOrder(row) });
   }
 
   if (pathname === '/api/admin/login') {
@@ -649,6 +974,11 @@ async function handleApi(request, response, url) {
            (SELECT count(*)::int FROM alium_users) AS users,
            (SELECT count(*)::int FROM alium_subscribers WHERE notify = true) AS subscribers,
            (SELECT count(*)::int FROM alium_builds) AS builds,
+           (SELECT count(*)::int FROM alium_orders) AS orders,
+           (SELECT count(*)::int FROM alium_orders WHERE status NOT IN ('entregado','cancelado')) AS open_orders,
+           (SELECT count(*)::int FROM alium_suppliers) AS suppliers,
+           (SELECT count(*)::int FROM alium_suppliers WHERE status = 'nuevo') AS new_suppliers,
+           (SELECT count(*)::int FROM alium_products WHERE active = true) AS products,
            (SELECT count(*)::int FROM alium_users WHERE created_at > now() - interval '7 days') AS recent,
            (SELECT max(created_at) FROM alium_users) AS last_registration`,
       ),
@@ -663,6 +993,11 @@ async function handleApi(request, response, url) {
         users: Number(row.users) || 0,
         subscribers: Number(row.subscribers) || 0,
         builds: Number(row.builds) || 0,
+        orders: Number(row.orders) || 0,
+        openOrders: Number(row.open_orders) || 0,
+        suppliers: Number(row.suppliers) || 0,
+        newSuppliers: Number(row.new_suppliers) || 0,
+        products: Number(row.products) || 0,
         recentUsers: Number(row.recent) || 0,
         lastRegistrationAt: toIso(row.last_registration),
       },
@@ -679,6 +1014,165 @@ async function handleApi(request, response, url) {
         createdAt: toIso(item.created_at),
       })),
     });
+  }
+
+  if (pathname === '/api/admin/orders') {
+    if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'Falta DATABASE_URL.' });
+    if (!(await adminAuthorizedRequest(request))) return json(response, 401, { error: 'No autorizado.' });
+    const status = cleanText(url.searchParams.get('status'), 20);
+    const limit = Math.min(500, Math.max(1, Number(url.searchParams.get('limit')) || 200));
+    const params = [];
+    let where = '';
+    if (status && ORDER_STATUSES.includes(status)) { params.push(status); where = `WHERE status = $${params.length}`; }
+    params.push(limit);
+    const result = await dbQuery(`SELECT * FROM alium_orders ${where} ORDER BY created_at DESC LIMIT $${params.length}`, params);
+    return json(response, 200, { ok: true, orders: result.rows.map(orderFromRow) });
+  }
+
+  const adminOrderMatch = pathname.match(/^\/api\/admin\/orders\/([0-9a-f-]{36})$/i);
+  if (adminOrderMatch) {
+    if (method !== 'PATCH') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'Falta DATABASE_URL.' });
+    if (!(await adminAuthorizedRequest(request))) return json(response, 401, { error: 'No autorizado.' });
+    if (!String(request.headers['content-type'] || '').toLowerCase().startsWith('application/json')) return json(response, 415, { error: 'Formato de solicitud no admitido.' });
+    const body = await readJson(request);
+    const found = await dbQuery('SELECT * FROM alium_orders WHERE id = $1', [adminOrderMatch[1]]);
+    if (!found.rows[0]) return json(response, 404, { error: 'Pedido no encontrado.' });
+    const current = found.rows[0];
+    const status = body.status === undefined ? current.status : cleanText(body.status, 20);
+    if (!ORDER_STATUSES.includes(status)) return json(response, 400, { error: 'Estado del pedido no válido.' });
+    let estimatedDate = current.estimated_date;
+    if (body.estimatedDate !== undefined) {
+      const raw = cleanText(body.estimatedDate, 10);
+      estimatedDate = raw ? raw : null;
+      if (raw && !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return json(response, 400, { error: 'La fecha estimada debe tener formato AAAA-MM-DD.' });
+    }
+    const adminNotes = body.adminNotes === undefined ? current.admin_notes : (cleanText(body.adminNotes, 2000) || null);
+    const result = await dbQuery(
+      `UPDATE alium_orders SET status = $1, estimated_date = $2, admin_notes = $3, updated_at = now()
+        WHERE id = $4 RETURNING *`,
+      [status, estimatedDate, adminNotes, adminOrderMatch[1]],
+    );
+    return json(response, 200, { ok: true, order: orderFromRow(result.rows[0]) });
+  }
+
+  if (pathname === '/api/admin/suppliers') {
+    if (method !== 'GET') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'Falta DATABASE_URL.' });
+    if (!(await adminAuthorizedRequest(request))) return json(response, 401, { error: 'No autorizado.' });
+    const result = await dbQuery('SELECT * FROM alium_suppliers ORDER BY created_at DESC LIMIT 500');
+    return json(response, 200, {
+      ok: true,
+      suppliers: result.rows.map((row) => ({
+        id: row.id, businessName: row.business_name, contactName: row.contact_name, email: row.email,
+        phone: row.phone || '', website: row.website || '', city: row.city || '',
+        categories: String(row.categories || '').split(',').filter(Boolean), message: row.message || '',
+        status: row.status, createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+      })),
+    });
+  }
+
+  const adminSupplierMatch = pathname.match(/^\/api\/admin\/suppliers\/([0-9a-f-]{36})$/i);
+  if (adminSupplierMatch) {
+    if (method !== 'PATCH') return json(response, 405, { error: 'Método no permitido.' });
+    if (!databaseUrl()) return json(response, 503, { error: 'Falta DATABASE_URL.' });
+    if (!(await adminAuthorizedRequest(request))) return json(response, 401, { error: 'No autorizado.' });
+    if (!String(request.headers['content-type'] || '').toLowerCase().startsWith('application/json')) return json(response, 415, { error: 'Formato de solicitud no admitido.' });
+    const body = await readJson(request);
+    const status = cleanText(body.status, 20);
+    if (!SUPPLIER_STATUSES.includes(status)) return json(response, 400, { error: 'Estado de tienda no válido.' });
+    const result = await dbQuery('UPDATE alium_suppliers SET status = $1 WHERE id = $2 RETURNING id, status', [status, adminSupplierMatch[1]]);
+    if (!result.rows[0]) return json(response, 404, { error: 'Tienda no encontrada.' });
+    return json(response, 200, { ok: true, id: result.rows[0].id, status: result.rows[0].status });
+  }
+
+  if (pathname === '/api/admin/products') {
+    if (!databaseUrl()) return json(response, 503, { error: 'Falta DATABASE_URL.' });
+    if (!(await adminAuthorizedRequest(request))) return json(response, 401, { error: 'No autorizado.' });
+    if (method === 'GET') {
+      const result = await dbQuery(
+        `SELECT p.*, s.business_name AS supplier_name
+           FROM alium_products p
+           LEFT JOIN alium_suppliers s ON s.id = p.supplier_id
+          ORDER BY p.created_at DESC LIMIT 500`,
+      );
+      return json(response, 200, { ok: true, products: result.rows.map(productFromRow) });
+    }
+    if (method === 'POST') {
+      if (!String(request.headers['content-type'] || '').toLowerCase().startsWith('application/json')) return json(response, 415, { error: 'Formato de solicitud no admitido.' });
+      const body = await readJson(request, 128 * 1024);
+      const category = cleanText(body.category, 30);
+      const name = cleanText(body.name, 160);
+      const supplierId = cleanText(body.supplierId, 36);
+      const price = cleanNumber(body.price);
+      const currency = body.currency === 'DOP' ? 'DOP' : 'USD';
+      if (!ALLOWED_CATEGORIES.has(category)) return json(response, 400, { error: 'Categoría no válida.' });
+      if (name.length < 2) return json(response, 400, { error: 'Escribe el nombre del producto.' });
+      if (!/^[0-9a-f-]{36}$/i.test(supplierId)) return json(response, 400, { error: 'Elige la tienda proveedora.' });
+      if (price === null || price < 0) return json(response, 400, { error: 'Escribe un precio válido.' });
+      const supplier = await dbQuery('SELECT id FROM alium_suppliers WHERE id = $1', [supplierId]);
+      if (!supplier.rows[0]) return json(response, 404, { error: 'La tienda seleccionada no existe.' });
+      const attributes = sanitizeAttributes(body.attributes || body);
+      const result = await dbQuery(
+        `INSERT INTO alium_products
+           (supplier_id, category, name, brand, model, spec, price, currency, image_url, product_url, attributes, active)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12)
+         RETURNING *, (SELECT business_name FROM alium_suppliers WHERE id = $1) AS supplier_name`,
+        [supplierId, category, name, cleanText(body.brand, 80) || null, cleanText(body.model, 120) || null,
+          cleanText(body.spec, 300) || null, price, currency, validHttpUrl(body.imageUrl) || null,
+          validHttpUrl(body.productUrl) || null, JSON.stringify(attributes), body.active !== false],
+      );
+      return json(response, 201, { ok: true, product: productFromRow(result.rows[0]) });
+    }
+    return json(response, 405, { error: 'Método no permitido.' });
+  }
+
+  if (pathname === '/api/admin/products/import') {
+    if (method !== 'POST') return json(response, 405, { error: 'Método no permitido.' });
+    if (!(await adminAuthorizedRequest(request))) return json(response, 401, { error: 'No autorizado.' });
+    if (!String(request.headers['content-type'] || '').toLowerCase().startsWith('application/json')) return json(response, 415, { error: 'Formato de solicitud no admitido.' });
+    const body = await readJson(request);
+    const suggestion = await importProductFromUrl(body.url);
+    return json(response, 200, { ok: true, suggestion });
+  }
+
+  const adminProductMatch = pathname.match(/^\/api\/admin\/products\/([0-9a-f-]{36})$/i);
+  if (adminProductMatch) {
+    if (!databaseUrl()) return json(response, 503, { error: 'Falta DATABASE_URL.' });
+    if (!(await adminAuthorizedRequest(request))) return json(response, 401, { error: 'No autorizado.' });
+    if (method === 'DELETE') {
+      const result = await dbQuery('DELETE FROM alium_products WHERE id = $1 RETURNING id', [adminProductMatch[1]]);
+      if (!result.rows[0]) return json(response, 404, { error: 'Producto no encontrado.' });
+      return json(response, 200, { ok: true });
+    }
+    if (method === 'PATCH') {
+      if (!String(request.headers['content-type'] || '').toLowerCase().startsWith('application/json')) return json(response, 415, { error: 'Formato de solicitud no admitido.' });
+      const body = await readJson(request, 128 * 1024);
+      const found = await dbQuery('SELECT * FROM alium_products WHERE id = $1', [adminProductMatch[1]]);
+      if (!found.rows[0]) return json(response, 404, { error: 'Producto no encontrado.' });
+      const current = found.rows[0];
+      const category = body.category === undefined ? current.category : cleanText(body.category, 30);
+      if (!ALLOWED_CATEGORIES.has(category)) return json(response, 400, { error: 'Categoría no válida.' });
+      const price = body.price === undefined ? Number(current.price) : cleanNumber(body.price);
+      if (price === null || price < 0) return json(response, 400, { error: 'Precio no válido.' });
+      const attributes = body.attributes === undefined ? current.attributes : sanitizeAttributes(body.attributes || body);
+      const result = await dbQuery(
+        `UPDATE alium_products SET category=$1, name=$2, brand=$3, model=$4, spec=$5, price=$6,
+           currency=$7, image_url=$8, product_url=$9, attributes=$10::jsonb, active=$11, updated_at=now()
+         WHERE id=$12
+         RETURNING *, (SELECT business_name FROM alium_suppliers WHERE id = supplier_id) AS supplier_name`,
+        [category, cleanText(body.name, 160) || current.name, body.brand === undefined ? current.brand : (cleanText(body.brand, 80) || null),
+          body.model === undefined ? current.model : (cleanText(body.model, 120) || null),
+          body.spec === undefined ? current.spec : (cleanText(body.spec, 300) || null),
+          price, body.currency === 'DOP' ? 'DOP' : body.currency === 'USD' ? 'USD' : current.currency,
+          body.imageUrl === undefined ? current.image_url : (validHttpUrl(body.imageUrl) || null),
+          body.productUrl === undefined ? current.product_url : (validHttpUrl(body.productUrl) || null),
+          JSON.stringify(attributes), body.active === undefined ? current.active : Boolean(body.active), adminProductMatch[1]],
+      );
+      return json(response, 200, { ok: true, product: productFromRow(result.rows[0]) });
+    }
+    return json(response, 405, { error: 'Método no permitido.' });
   }
 
   if (pathname === '/api/admin/subscribers') {

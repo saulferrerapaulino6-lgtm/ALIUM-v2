@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090910">
+<meta name="description" content="Consulta el estado de tu pedido ALIUM con tu código de seguimiento y el WhatsApp o correo con el que lo hiciste.">
+<title>ALIUM · Seguimiento de pedido</title>
+<link rel="icon" href="assets/alium-as.png">
+<link rel="stylesheet" href="assets/alium-ui.css?v=2">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="index.html"><img src="assets/alium-as.png" alt="ALIUM"><span>ALIUM</span></a>
+    <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-label="Abrir menú">☰</button>
+    <nav class="nav" data-nav aria-label="Navegación principal">
+      <a class="nav-cta" href="configurador.html">Crear mi PC ↗</a>
+      <a href="tiendas.html">Tiendas</a>
+      <a href="garantia.html">Garantía</a>
+      <a href="presentacion.html">Cómo funciona</a>
+      <a class="active" href="pedido.html">Seguimiento</a>
+      <a href="cuenta.html">Mi cuenta</a>
+      <button class="theme-btn" type="button" data-theme-toggle aria-label="Cambiar tema">☀</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <p class="kicker">Seguimiento de pedido</p>
+    <h1>Tu pedido, <em>sin misterio.</em></h1>
+    <p class="lead">Escribe el código que te dimos al guardar el pedido y el WhatsApp o correo con el que lo hiciste. Verás el estado, las piezas, el anticipo y la fecha estimada.</p>
+  </section>
+
+  <section class="section" style="border-top:0;padding-top:0">
+    <div class="grid two" style="align-items:start">
+      <form class="card form" id="track-form" novalidate>
+        <div class="field"><label for="track-code">Código de pedido</label><input id="track-code" maxlength="16" placeholder="Ej.: AL-ABC123" autocomplete="off" spellcheck="false" style="text-transform:uppercase"></div>
+        <div class="field"><label for="track-contact">WhatsApp o correo del pedido</label><input id="track-contact" maxlength="254" placeholder="Ej.: 809 000 0000 o tu@correo.com" autocomplete="tel"></div>
+        <p class="form-status" id="track-status" role="status" aria-live="polite"></p>
+        <button class="button primary" type="submit" id="track-submit">Consultar pedido</button>
+        <p class="small-note">Por seguridad, el seguimiento no muestra tu dirección ni tus datos completos. Si necesitas cambiarlos, escríbenos por WhatsApp con tu código.</p>
+      </form>
+      <aside class="grid" style="gap:14px">
+        <div class="card"><h3>¿No encuentras tu código?</h3><p>Está en el mensaje de WhatsApp que se abrió al guardar el pedido y en la página de confirmación. También lo puedes pedir por WhatsApp con tu nombre y la fecha aproximada.</p></div>
+        <div class="card"><h3>Estados del pedido</h3><p>Recibido → contactado → cotizado → anticipo → comprando → en tránsito → armando → listo → entregado.</p></div>
+        <div class="notice green"><b>Fecha con consecuencia:</b> si ALIUM se pasa de la fecha acordada, aplica la compensación de la <a href="garantia.html">política de garantía</a>.</div>
+      </aside>
+    </div>
+    <div id="track-result" hidden></div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <span>© <span data-year></span> ALIUM · Tecnología clara, sin vueltas.</span>
+    <div class="footer-links"><a href="index.html">Inicio</a><a href="tiendas.html">Tiendas</a><a href="garantia.html">Garantía</a><a href="presentacion.html">Cómo funciona</a></div>
+  </div>
+</footer>
+<script src="assets/alium-ui.js?v=2" defer></script>
+</body>
+</html>

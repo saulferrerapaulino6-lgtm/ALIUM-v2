@@ -8,7 +8,7 @@
 <meta name="referrer" content="same-origin">
 <title>ALIUM · Panel privado</title>
 <link rel="icon" href="assets/alium-as.png">
-<link rel="stylesheet" href="assets/admin.css?v=1">
+<link rel="stylesheet" href="assets/admin.css?v=3">
 </head>
 <body>
 
@@ -32,7 +32,7 @@
   <section class="login-card" id="login-view">
     <p class="kicker">ACCESO PRIVADO</p>
     <h1>Entra al panel de ALIUM</h1>
-    <p class="muted">Aquí ves las personas registradas y el estado del sitio. Solo se entra con la clave de administrador.</p>
+    <p class="muted">Pedidos, tiendas, productos, personas registradas y suscriptores. Solo se entra con la clave de administrador.</p>
     <form id="login-form" autocomplete="off">
       <label for="admin-key">Clave de administrador</label>
       <div class="key-row">
@@ -62,44 +62,128 @@
     </div>
 
     <div class="cards">
-      <article class="card"><span class="label">Usuarios registrados</span><b id="total-users">—</b><small id="last-registration">—</small></article>
-      <article class="card"><span class="label">Nuevos (7 días)</span><b id="recent-users">—</b><small>cuentas creadas esta semana</small></article>
+      <article class="card"><span class="label">Usuarios</span><b id="total-users">—</b><small id="last-registration">—</small></article>
       <article class="card"><span class="label">Suscriptores</span><b id="total-subscribers">—</b><small>reciben avisos y ofertas</small></article>
-      <article class="card"><span class="label">PCs guardadas</span><b id="total-builds">—</b><small>configuraciones en cuentas</small></article>
+      <article class="card"><span class="label">Pedidos</span><b id="total-orders">—</b><small id="total-open-orders">— abiertos</small></article>
+      <article class="card"><span class="label">Nuevos (7 días)</span><b id="recent-users">—</b><small>cuentas creadas</small></article>
+      <article class="card"><span class="label">Tiendas</span><b id="total-suppliers">—</b><small id="total-new-suppliers">— por revisar</small></article>
+      <article class="card"><span class="label">Productos activos</span><b id="total-products">—</b><small>catálogo publicado</small></article>
     </div>
 
-    <div class="columns">
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Usuarios</h2>
-          <span class="count" id="users-count">—</span>
-        </div>
-        <label class="search">
-          <span class="visually-hidden">Buscar usuario</span>
-          <input id="search-input" type="search" placeholder="Buscar por nombre o correo…" autocomplete="off">
-        </label>
-        <div class="user-list" id="user-list">
-          <p class="muted">Cargando usuarios…</p>
-        </div>
-      </section>
+    <nav class="tabs" role="tablist" aria-label="Secciones del panel">
+      <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="resumen">Resumen</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-tab="pedidos">Pedidos <span class="tab-count" id="tab-orders-count">0</span></button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-tab="tiendas">Tiendas <span class="tab-count" id="tab-suppliers-count">0</span></button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-tab="productos">Productos <span class="tab-count" id="tab-products-count">0</span></button>
+    </nav>
 
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Suscriptores</h2>
-          <span class="count" id="subscribers-count">—</span>
-        </div>
-        <div class="user-list compact" id="subscriber-list">
-          <p class="muted">Cargando suscriptores…</p>
-        </div>
-        <p class="tiny">Los correos de suscriptores solo se muestran aquí, dentro de tu panel privado.</p>
-      </section>
-    </div>
+    <!-- Resumen -->
+    <section class="tab-panel" id="tab-resumen" role="tabpanel">
+      <div class="columns">
+        <section class="panel">
+          <div class="panel-head"><h2>Usuarios</h2><span class="count" id="users-count">—</span></div>
+          <label class="search"><span class="visually-hidden">Buscar usuario</span><input id="search-input" type="search" placeholder="Buscar por nombre o correo…" autocomplete="off"></label>
+          <div class="user-list" id="user-list"><p class="muted">Cargando usuarios…</p></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><h2>Suscriptores</h2><span class="count" id="subscribers-count">—</span></div>
+          <div class="user-list compact" id="subscriber-list"><p class="muted">Cargando suscriptores…</p></div>
+          <p class="tiny">Los correos de suscriptores solo se muestran aquí, dentro de tu panel privado.</p>
+        </section>
+      </div>
+    </section>
 
-    <p class="tiny footer-note">Se actualiza solo cada 30 segundos. Si cierras sesión, necesitarás la clave otra vez.</p>
+    <!-- Pedidos -->
+    <section class="tab-panel" id="tab-pedidos" role="tabpanel" hidden>
+      <section class="panel">
+        <div class="panel-head"><h2>Pedidos</h2><span class="count" id="orders-count">—</span></div>
+        <div class="toolbar">
+          <label class="inline-label">Estado
+            <select id="orders-filter">
+              <option value="">Todos</option>
+              <option value="nuevo">Nuevo</option>
+              <option value="contactado">Contactado</option>
+              <option value="cotizado">Cotizado</option>
+              <option value="confirmado">Confirmado / anticipo</option>
+              <option value="comprando">Comprando</option>
+              <option value="en_transito">En tránsito</option>
+              <option value="armando">Armando</option>
+              <option value="listo">Listo</option>
+              <option value="entregado">Entregado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </label>
+          <p class="tiny" style="margin:0">Guarda estado, fecha estimada y notas. El cliente lo ve en pedido.html.</p>
+        </div>
+        <div class="order-list" id="orders-list"><p class="muted">Cargando pedidos…</p></div>
+      </section>
+    </section>
+
+    <!-- Tiendas -->
+    <section class="tab-panel" id="tab-tiendas" role="tabpanel" hidden>
+      <section class="panel">
+        <div class="panel-head"><h2>Tiendas proveedoras</h2><span class="count" id="suppliers-count">—</span></div>
+        <p class="tiny" style="margin-top:0">Aprueba una tienda para que sus productos aparezcan en el configurador. Rechaza las que no tengan datos verificables.</p>
+        <div class="order-list" id="suppliers-list"><p class="muted">Cargando tiendas…</p></div>
+      </section>
+    </section>
+
+    <!-- Productos -->
+    <section class="tab-panel" id="tab-productos" role="tabpanel" hidden>
+      <section class="panel">
+        <div class="panel-head"><h2>Publicar producto</h2><span class="count" id="products-count">—</span></div>
+        <form class="product-form" id="product-form" novalidate>
+          <div class="form-grid">
+            <label>Tienda proveedora<select id="product-supplier" required></select></label>
+            <label>Categoría<select id="product-category" required>
+              <option value="cpu">Procesador</option><option value="cooler">Disipador de CPU</option><option value="motherboard">Placa madre</option>
+              <option value="memory">Memoria</option><option value="storage">Almacenamiento</option><option value="gpu">Tarjeta de video</option>
+              <option value="case">Case</option><option value="psu">Fuente</option><option value="os">Sistema operativo</option><option value="monitor">Monitor</option>
+            </select></label>
+            <label>Nombre del producto<input id="product-name" maxlength="160" placeholder="Ej.: Ryzen 5 7600" required></label>
+            <label>Marca<input id="product-brand" maxlength="80" placeholder="Ej.: AMD"></label>
+            <label>Modelo<input id="product-model" maxlength="120" placeholder="Ej.: 100-100001015BOX"></label>
+            <label>Precio<input id="product-price" type="number" min="0" step="0.01" placeholder="0.00" required></label>
+            <label>Moneda<select id="product-currency"><option value="USD">USD</option><option value="DOP">RD$</option></select></label>
+            <label>Imagen real (URL https)<input id="product-image" type="url" maxlength="500" placeholder="https://…/foto.jpg"></label>
+            <label>Enlace del producto<input id="product-url" type="url" maxlength="500" placeholder="https://…/producto"></label>
+            <label class="wide">Especificaciones<input id="product-spec" maxlength="300" placeholder="Ej.: 6 núcleos · AM5 · 5.1 GHz"></label>
+          </div>
+          <div class="form-grid compat-grid">
+            <label>Socket<input id="attr-socket" maxlength="40" placeholder="AM5 / LGA1700"></label>
+            <label>Memoria<input id="attr-memory" maxlength="40" placeholder="DDR4 / DDR5"></label>
+            <label>Formato<input id="attr-form" maxlength="40" placeholder="ATX / Micro-ATX"></label>
+            <label>Vatios<input id="attr-watts" type="number" min="0" step="1" placeholder="65"></label>
+            <label>Sockets compatibles (disipador)<input id="attr-supports" maxlength="120" placeholder="AM4, AM5, LGA1700"></label>
+            <label>Formatos admitidos (case)<input id="attr-forms" maxlength="120" placeholder="ATX, Micro-ATX"></label>
+            <label>Espacio para GPU mm<input id="attr-clearance" type="number" min="0" step="1" placeholder="360"></label>
+            <label>Largo de GPU mm<input id="attr-length" type="number" min="0" step="1" placeholder="301"></label>
+            <label>Fuente mínima W<input id="attr-minpsu" type="number" min="0" step="1" placeholder="650"></label>
+            <label class="checkline" style="align-self:end"><input id="attr-igpu" type="checkbox"> CPU con gráficos integrados</label>
+            <label class="checkline" style="align-self:end"><input id="attr-integrated" type="checkbox"> GPU integrada en CPU</label>
+          </div>
+          <div class="toolbar" style="margin-top:12px">
+            <div class="import-row">
+              <input id="import-url" type="url" placeholder="Pegar URL de la tienda para sugerir datos">
+              <button class="ghost" type="button" id="import-btn">Sugerir datos</button>
+            </div>
+            <p class="form-message" id="import-status" role="status" aria-live="polite"></p>
+          </div>
+          <p class="form-message" id="product-status" role="status" aria-live="polite"></p>
+          <div class="toolbar"><button class="primary" type="submit" id="product-submit">Publicar producto</button><button class="ghost" type="button" id="product-reset">Limpiar</button></div>
+        </form>
+      </section>
+      <section class="panel" style="margin-top:18px">
+        <div class="panel-head"><h2>Catálogo publicado</h2><span class="count" id="products-list-count">—</span></div>
+        <div class="order-list" id="products-list"><p class="muted">Cargando productos…</p></div>
+      </section>
+    </section>
+
+    <p class="tiny footer-note">Se actualiza solo cada 30 segundos en Resumen. Si cierras sesión, necesitarás la clave otra vez.</p>
   </section>
 
 </main>
 
-<script src="assets/admin.js?v=1" defer></script>
+<script src="assets/admin.js?v=3" defer></script>
 </body>
 </html>

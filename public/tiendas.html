@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090910">
+<meta name="description" content="Tiendas proveedoras verificadas de ALIUM: registro para comercios de tecnología y catálogo validado por ALIUM.">
+<title>ALIUM · Tiendas proveedoras</title>
+<link rel="icon" href="assets/alium-as.png">
+<link rel="stylesheet" href="assets/alium-ui.css?v=2">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="index.html"><img src="assets/alium-as.png" alt="ALIUM"><span>ALIUM</span></a>
+    <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-label="Abrir menú">☰</button>
+    <nav class="nav" data-nav aria-label="Navegación principal">
+      <a class="nav-cta" href="configurador.html">Crear mi PC ↗</a>
+      <a class="active" href="tiendas.html">Tiendas</a>
+      <a href="garantia.html">Garantía</a>
+      <a href="presentacion.html">Cómo funciona</a>
+      <a href="pedido.html">Seguimiento</a>
+      <a href="cuenta.html">Mi cuenta</a>
+      <button class="theme-btn" type="button" data-theme-toggle aria-label="Cambiar tema">☀</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <p class="kicker">Red de proveedores ALIUM</p>
+    <h1>Tiendas que <em>responden.</em></h1>
+    <p class="lead">ALIUM trabaja con tiendas de tecnología locales y verificadas. Tú eliges las piezas, nosotros compramos al proveedor, validamos compatibilidad y respondemos por el dinero. Si tienes una tienda, puedes postularte aquí.</p>
+    <div class="hero-actions">
+      <a class="button primary" href="#registro">Registrar mi tienda</a>
+      <a class="button quiet" href="garantia.html">Leer la política de garantía</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Tiendas verificadas</h2>
+      <p>Estas tiendas fueron aprobadas por ALIUM. Solo publicamos productos con precio, modelo e imagen real, y validamos la compatibilidad antes de recomendarlos.</p>
+    </div>
+    <div class="grid" id="store-list">
+      <p class="empty">Cargando tiendas verificadas…</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Cómo trabaja ALIUM con las tiendas</h2>
+      <p>Un modelo simple, sin APIs de marketplaces y sin promesas vacías: catálogo real, comisión clara y responsabilidad definida.</p>
+    </div>
+    <div class="grid three">
+      <article class="card"><span class="num">01</span><h3>La tienda se registra</h3><p>Nos comparte nombre comercial, web, ciudad, contacto y categorías que maneja. ALIUM revisa que sea una tienda real.</p></article>
+      <article class="card"><span class="num">02</span><h3>ALIUM carga el catálogo</h3><p>Publicamos cada producto con precio, modelo, imagen real y los datos técnicos necesarios para validar compatibilidad.</p></article>
+      <article class="card"><span class="num">03</span><h3>Vendemos y compramos</h3><p>El cliente cierra por WhatsApp, paga 50% de anticipo y ALIUM compra al proveedor. La tienda cobra su venta y ALIUM asume la relación con el cliente.</p></article>
+    </div>
+    <div class="notice" style="margin-top:18px"><b>Comisión propuesta:</b> 10% por venta concretada. Sin cuota fija ni costo por publicar. Los detalles se acuerdan por escrito antes de activar el catálogo.</div>
+  </section>
+
+  <section class="section" id="registro">
+    <div class="section-head">
+      <h2>Registra tu tienda</h2>
+      <p>Déjanos los datos del negocio. Si el perfil encaja, te escribimos para validar el catálogo, acordar la comisión y cargar tus productos.</p>
+    </div>
+    <div class="grid two" style="align-items:start">
+      <form class="card form" id="store-form" novalidate>
+        <div class="form-row">
+          <div class="field"><label for="store-business">Nombre de la tienda *</label><input id="store-business" maxlength="120" autocomplete="organization" placeholder="Ej.: TecnoStore RD" required></div>
+          <div class="field"><label for="store-contact">Persona de contacto *</label><input id="store-contact" maxlength="80" autocomplete="name" placeholder="Nombre y apellido" required></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label for="store-email">Correo del negocio *</label><input id="store-email" type="email" maxlength="254" autocomplete="email" placeholder="ventas@tutienda.com" required></div>
+          <div class="field"><label for="store-phone">WhatsApp o teléfono *</label><input id="store-phone" maxlength="40" autocomplete="tel" placeholder="Ej.: 809 000 0000" required></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label for="store-website">Página web *</label><input id="store-website" type="url" maxlength="300" placeholder="https://tutienda.com" required><small>Debe empezar por https://</small></div>
+          <div class="field"><label for="store-city">Ciudad o zona *</label><input id="store-city" maxlength="80" placeholder="Ej.: Santo Domingo" required></div>
+        </div>
+        <fieldset class="field" style="border:0;padding:0;margin:0">
+          <label>Categorías que manejas *</label>
+          <div class="grid two" style="gap:8px">
+            <label class="checkline"><input type="checkbox" name="categories" value="cpu"> Procesadores</label>
+            <label class="checkline"><input type="checkbox" name="categories" value="motherboard"> Placas madre</label>
+            <label class="checkline"><input type="checkbox" name="categories" value="memory"> Memoria RAM</label>
+            <label class="checkline"><input type="checkbox" name="categories" value="storage"> Almacenamiento</label>
+            <label class="checkline"><input type="checkbox" name="categories" value="gpu"> Tarjetas de video</label>
+            <label class="checkline"><input type="checkbox" name="categories" value="psu"> Fuentes</label>
+            <label class="checkline"><input type="checkbox" name="categories" value="case"> Cases</label>
+            <label class="checkline"><input type="checkbox" name="categories" value="cooler"> Disipadores</label>
+            <label class="checkline"><input type="checkbox" name="categories" value="monitor"> Monitores</label>
+            <label class="checkline"><input type="checkbox" name="categories" value="os"> Sistemas operativos</label>
+          </div>
+        </fieldset>
+        <div class="field"><label for="store-message">Cuéntanos sobre tu tienda (opcional)</label><textarea id="store-message" maxlength="1500" placeholder="Años operando, marcas que distribuyes, forma de entrega, facturación…"></textarea></div>
+        <p class="form-status" id="store-status" role="status" aria-live="polite"></p>
+        <button class="button primary" type="submit" id="store-submit">Enviar registro de tienda</button>
+        <p class="small-note">Al enviar aceptas que ALIUM te contacte por correo o WhatsApp para validar el negocio. No publicamos tus datos de contacto.</p>
+      </form>
+      <aside class="grid" style="gap:14px">
+        <div class="card"><h3>Qué pedimos</h3><ul class="list-check"><li>Tienda real con web o catálogo verificable.</li><li>Precios actualizados y disponibilidad.</li><li>Imagen real del producto y modelo exacto.</li><li>Datos técnicos para validar compatibilidad.</li><li>Factura o comprobante de compra.</li></ul></div>
+        <div class="card"><h3>Qué ofrecemos</h3><ul class="list-check"><li>Clientes con pedido cerrado y anticipo.</li><li>Catálogo cargado por ALIUM, sin trabajo extra.</li><li>Compra directa, sin intermediarios raros.</li><li>Comisión clara del 10% por venta.</li><li>Relación a largo plazo, no una venta suelta.</li></ul></div>
+        <div class="notice warn"><b>Importante:</b> ALIUM no publica productos sin validar. Si el precio o el modelo no coinciden con la ficha real, no se activa el catálogo.</div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <span>© <span data-year></span> ALIUM · Tecnología clara, sin vueltas.</span>
+    <div class="footer-links"><a href="index.html">Inicio</a><a href="garantia.html">Garantía</a><a href="pedido.html">Seguimiento</a><a href="presentacion.html">Cómo funciona</a></div>
+  </div>
+</footer>
+<script src="assets/alium-ui.js?v=2" defer></script>
+</body>
+</html>

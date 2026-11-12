@@ -1,38 +1,55 @@
-# Proveedores y precios reales de ALIUM
+# Cómo se conectan las tiendas a ALIUM
 
-## Estado actual
+ALIUM no usa marketplaces externos. Las tiendas y proveedores locales se registran desde la web, ALIUM carga sus productos con precio, modelo e imagen real, y valida la compatibilidad antes de mostrar cada pieza.
 
-- **eBay Browse API:** el servidor ya admite consultas reales y muestra la foto, el precio y el enlace de la publicación del vendedor. En producción faltan las credenciales privadas `EBAY_CLIENT_ID` y `EBAY_CLIENT_SECRET`; hasta añadirlas, el configurador usa las imágenes de categoría y precios de ejemplo.
-- **Amazon:** la integración no está activada. Amazon sustituyó PA-API por **Creators API**. Antes de mostrar sus precios o imágenes en ALIUM hace falta la aprobación de Amazon para este caso de uso.
-- Los precios del catálogo incluido en ALIUM son referencias de ejemplo. No son ofertas de Amazon ni cotizaciones actuales.
+## Flujo de una tienda
 
-## Activar eBay en Netlify
+1. La tienda entra en `/tiendas.html` y completa el formulario de registro (nombre, contacto, WhatsApp, ciudad, catálogo aproximado).
+2. El registro llega a `alium_suppliers` y queda en estado `pendiente`.
+3. ALIUM revisa la tienda desde `/admin.html` y la marca como `aprobada` o `rechazada`.
+4. ALIUM carga los productos de la tienda en `alium_products` (categoría, marca, modelo, precio, imagen real y notas de compatibilidad).
+5. Cuando un cliente cierra un pedido, ALIUM compra a la tienda y paga el 10% de comisión por venta concretada. Sin cuota fija ni costo por publicar.
 
-1. Abre <https://app.netlify.com/projects/alium-pc-builder> → **Project configuration** → **Environment variables**.
-2. Añade `EBAY_CLIENT_ID` y `EBAY_CLIENT_SECRET` con las credenciales de **Production** creadas en eBay Developer.
-3. Confirma que `EBAY_ENV=production` y `EBAY_MARKETPLACE_ID=EBAY_US`.
-4. Guarda los cambios y lanza **Trigger deploy** (o espera al siguiente push). Las funciones toman las variables nuevas en el siguiente despliegue.
-5. Prueba una búsqueda de producto en el configurador: las publicaciones reales deben mostrar foto del proveedor, precio y enlace.
+## Endpoints públicos
 
-No pegues credenciales en el chat, GitHub, HTML, JavaScript público ni capturas. El servidor no revela los valores de las variables; el indicador del configurador solo informa si eBay tiene ambas claves.
+| Método | Ruta | Uso |
+| --- | --- | --- |
+| `GET` | `/api/site` | Configuración pública del sitio |
+| `GET` | `/api/stores` | Tiendas aprobadas que se muestran en la web |
+| `GET` | `/api/products` | Catálogo verificado (filtros por categoría y tienda) |
+| `POST` | `/api/suppliers` | Registro de una tienda o proveedor |
+| `POST` | `/api/orders` | Guarda el pedido antes de abrir WhatsApp |
+| `GET` | `/api/orders/track?code=...&contact=...` | Seguimiento del pedido con código y contacto |
 
-Para trabajar localmente, copia `.env.example` a `.env`, introduce las claves allí y reinicia `npm start`. `.env` está excluido de Git.
+Los pedidos guardan el subtotal de piezas, el costo de armado (`assembly_fee`), el total y el anticipo del 50%. El seguimiento nunca devuelve la dirección ni los datos completos del cliente.
 
-## Amazon: requisito antes de integrar
+## Panel de administración
 
-La API vigente es [Amazon Creators API](https://affiliate-program.amazon.com/creatorsapi/docs/en-us/introduction), no la antigua PA-API. Amazon requiere inscripción en Associates para el marketplace, acceso a Creators API y credenciales. Su documentación actual indica además que se necesitan 10 ventas calificadas en los 30 días previos para el acceso de API.
+`/admin.html` usa sesión con cookie `alium_admin`. La clave se valida contra el hash guardado en `alium_settings.admin_key_hash`; nunca se guarda en texto plano ni se muestra en el navegador.
 
-Antes de integrar ALIUM, solicita confirmación escrita a Amazon de que permite este uso concreto: un configurador que compara componentes de varios proveedores y que se adapta a móviles. Las políticas de Amazon restringen mostrar Product Advertising Content en aplicaciones pensadas para teléfonos sin aprobación previa y prohíben asociar ese contenido con enlaces que dirijan a otros comercios. Revisa [las políticas oficiales](https://affiliate-program.amazon.com/help/operating/policies) y confirma expresamente el caso de comparación de ALIUM. Sin esa aprobación, no se deben presentar aquí sus fotos, precios ni disponibilidad como datos reales.
+- Pedidos: estado, fecha estimada, notas internas, anticipo calculado sobre el total.
+- Tiendas: aprobar, rechazar, editar contacto.
+- Productos: precio, modelo, imagen real, compatibilidad.
+- Resumen: usuarios, suscriptores, pedidos, tiendas y productos.
 
-Una vez autorizado, se necesitarán credenciales de Creators API y un Partner Tag válidos para el marketplace elegido. Se guardarán únicamente en variables privadas de Netlify. Las imágenes no se pueden almacenar en caché; los datos de precio y disponibilidad requieren sello de fecha/hora y el aviso exigido por Amazon.
+## Variables privadas
 
-## Correo transaccional
+Copia `.env.example` a `.env` para trabajar localmente (`.env` está excluido de Git):
 
-Los avisos de mantenimiento, incidencias y ofertas usan **Resend**. Añade `RESEND_API_KEY`, `EMAIL_FROM`, `PUBLIC_SITE_URL` y `ADMIN_TOKEN` en las variables de Netlify. El detalle está en `CUENTAS.md`.
+- `DATABASE_URL`: cadena de conexión de Neon Postgres. Sin ella, cuentas y pedidos quedan desactivados.
+- `PUBLIC_SITE_URL`: URL pública usada en los enlaces de correo y seguimiento.
+- `RESEND_API_KEY` / `EMAIL_FROM`: correo transaccional opcional.
+- `PORT` / `HOST`: servidor local.
 
-## Límites del catálogo
+El número de WhatsApp de ALIUM y el costo de armado se editan en `public/assets/alium-config.js`, no en variables de entorno.
 
-- Las ofertas y existencias pueden cambiar; verifica el precio final en el comercio.
-- En eBay la compatibilidad de publicaciones externas queda pendiente hasta revisar modelo, socket, memoria, medidas, envío e impuestos.
-- La consulta actual de eBay usa el marketplace `EBAY_US`; el configurador no estima impuestos ni courier a República Dominicana.
-- Las cuentas, el historial de PCs y la lista de avisos usan Neon Postgres. Las consultas de proveedores se hacen al vuelo; la base de datos solo guarda usuarios, sesiones, suscripciones y las PCs que cada persona decide guardar. Ver `CUENTAS.md`.
+No pegues credenciales en el chat, GitHub, HTML, JavaScript público ni capturas.
+
+## Base de datos
+
+- `alium_suppliers`: tiendas registradas y su estado.
+- `alium_products`: catálogo cargado por ALIUM.
+- `alium_orders`: pedidos con piezas, anticipo, entrega y seguimiento.
+- `alium_users`, `alium_sessions`, `alium_subscribers`, `alium_builds`: cuentas, sesiones, avisos y PCs guardadas.
+
+El esquema se crea al arrancar el servidor, incluidas las migraciones `ADD COLUMN IF NOT EXISTS` para bases ya existentes.

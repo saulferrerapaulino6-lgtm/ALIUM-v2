@@ -23,7 +23,7 @@ function applyTheme(theme) {
   safeSet('alium_theme', theme);
   document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
     const dark = theme === 'dark';
-    button.textContent = dark ? '☀' : '☾';
+    button.textContent = dark ? '☀ Tema claro' : '☾ Tema oscuro';
     button.title = dark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro';
     button.setAttribute('aria-label', button.title);
   });

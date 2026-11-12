@@ -20,7 +20,7 @@ h1,h2{font-family:"Barlow Condensed","Arial Narrow",Impact,sans-serif;text-trans
 .nav .nav-cta{padding:10px 15px;border-radius:11px;background:linear-gradient(105deg,var(--red),var(--purple));color:#fff;font-weight:800;box-shadow:0 9px 24px #902ce83d;white-space:nowrap}
 .nav .nav-cta:hover{color:#fff;box-shadow:0 12px 30px #a13dff65}
 .nav-toggle{display:none;width:44px;height:44px;border:1px solid #3d3948;border-radius:11px;background:#17151e;color:#f7f5fb;cursor:pointer;font-size:1.2rem}
-.theme-btn{width:42px;height:42px;flex:none;display:grid;place-items:center;border:1px solid #3d3948;border-radius:11px;background:#17151e;color:#f7f5fb;cursor:pointer;font-size:1.1rem}
+.theme-btn{width:auto;height:42px;flex:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 12px;white-space:nowrap;border:1px solid #3d3948;border-radius:11px;background:#17151e;color:#f7f5fb;cursor:pointer;font-size:.82rem;font-weight:700}
 .theme-btn:hover{border-color:#a44ce5;background:#211a2b}
 main{min-height:60vh}
 .hero{width:var(--page);margin:auto;padding:64px 0 44px}

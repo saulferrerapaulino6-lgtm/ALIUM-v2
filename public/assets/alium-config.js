@@ -8,5 +8,8 @@ window.ALIUM_CONFIG = {
   assemblyFeeDop: 1500,
   depositPercent: 50,
   commissionPercent: 10,
+  storeCommissionPercent: 10,
+  fxRate: 60.84,
+  fxDate: '29/10/2026',
   siteUrl: 'https://alium-pc-builder.netlify.app',
 };

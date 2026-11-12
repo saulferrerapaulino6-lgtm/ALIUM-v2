@@ -7,7 +7,7 @@
 - El pedido se guarda en la base de datos antes de abrir WhatsApp y recibe un código de seguimiento.
 - Páginas nuevas: `tiendas.html`, `garantia.html`, `pedido.html` y `presentacion.html`.
 - Registro de tiendas, carga de productos y validación de compatibilidad desde el panel privado.
-- Sin eBay, Amazon, marketplaces externos ni programas de afiliados.
+- Sin marketplaces externos ni programas de afiliados.
 
 ## Modelo
 

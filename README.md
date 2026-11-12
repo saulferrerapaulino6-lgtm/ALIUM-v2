@@ -2,7 +2,7 @@
 
 ALIUM es un intermediario de compra de PCs en República Dominicana. El cliente configura su equipo en la web, cierra el pedido por WhatsApp, paga el 50% de anticipo y ALIUM compra las piezas a tiendas locales, valida la compatibilidad y responde por el dinero, las piezas y la fecha.
 
-No es una tienda con inventario propio ni un marketplace de publicaciones. No se usan eBay, Amazon, programas de afiliados ni APIs de marketplaces.
+No es una tienda con inventario propio ni un marketplace de publicaciones. No se usan marketplaces externos, programas de afiliados ni APIs de terceros.
 
 ## Cómo funciona el pedido
 

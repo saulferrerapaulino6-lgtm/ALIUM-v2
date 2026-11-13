@@ -18,9 +18,9 @@ function safeUrl(value) {
 }
 
 /* Tema */
-function applyTheme(theme) {
+function applyTheme(theme, persist = true) {
   document.documentElement.dataset.theme = theme;
-  safeSet('alium_theme', theme);
+  if (persist) safeSet('alium_theme', theme);
   document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
     const dark = theme === 'dark';
     button.textContent = dark ? '☀ Tema claro' : '☾ Tema oscuro';
@@ -28,9 +28,11 @@ function applyTheme(theme) {
     button.setAttribute('aria-label', button.title);
   });
 }
-applyTheme(safeGet('alium_theme') || 'dark');
+const fixedTheme = document.documentElement.dataset.themeFixed;
+applyTheme(fixedTheme || safeGet('alium_theme') || 'dark', !fixedTheme);
 document.addEventListener('click', (event) => {
   if (event.target.closest('[data-theme-toggle]')) {
+    if (fixedTheme) return;
     applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
     return;
   }
